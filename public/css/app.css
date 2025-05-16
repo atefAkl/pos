@@ -1,0 +1,100 @@
+/* RTL Support */
+[dir='rtl'] body {
+    font-family: 'Tajawal', sans-serif;
+}
+
+[dir='rtl'] .navbar-nav {
+    padding-right: 0;
+}
+
+[dir='rtl'] .ms-auto {
+    margin-right: auto !important;
+    margin-left: 0 !important;
+}
+
+[dir='rtl'] .me-auto {
+    margin-left: auto !important;
+    margin-right: 0 !important;
+}
+
+/* Custom styles */
+body {
+    background-color: #f8fafc;
+}
+
+.navbar {
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.card {
+    border-radius: 0.5rem;
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    margin-bottom: 1rem;
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #edf2f7;
+    padding: 1rem;
+    font-weight: 600;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.btn {
+    border-radius: 0.375rem;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: #4f46e5;
+    border-color: #4f46e5;
+}
+
+.btn-primary:hover {
+    background-color: #4338ca;
+    border-color: #4338ca;
+    transform: translateY(-1px);
+}
+
+.form-control {
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+}
+
+.form-control:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.15);
+}
+
+/* Add Font Awesome icon styles */
+.fa, .fas, .far, .fab {
+    margin-right: 0.5rem;
+}
+
+[dir='rtl'] .fa,
+[dir='rtl'] .fas,
+[dir='rtl'] .far,
+[dir='rtl'] .fab {
+    margin-right: 0;
+    margin-left: 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .navbar-brand {
+        font-size: 1.25rem;
+    }
+    
+    .card {
+        margin: 0.5rem;
+    }
+}
