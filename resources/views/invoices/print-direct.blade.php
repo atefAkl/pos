@@ -5,69 +5,65 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>فاتورة #{{ $invoice->invoice_number }}</title>
     <style>
-        body {
-            font-family: xbriyaz, sans-serif;
-            margin: 0;
-            padding: 20px;
-            font-size: 14px;
-        }
-        .invoice-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .invoice-header h1 {
-            margin: 0;
-            color: #333;
-            font-size: 24px;
-        }
-        .invoice-header p {
-            margin: 5px 0;
-            color: #666;
-        }
-        .info-section {
-            margin-bottom: 20px;
-        }
-        .info-section div {
-            margin-bottom: 5px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: right;
-        }
-        th {
-            background-color: #f8f9fa;
-        }
-        .totals {
-            width: 300px;
-            margin-right: auto;
-        }
-        .totals td:first-child {
-            font-weight: bold;
-        }
-        .footer {
-            margin-top: 50px;
-            text-align: center;
-            color: #666;
-            font-size: 12px;
-        }
         @media print {
             body {
+                font-family: xbriyaz, sans-serif;
+                margin: 0;
                 padding: 0;
+                font-size: 12px;
             }
-            .no-print {
-                display: none;
+            .print-header {
+                text-align: center;
+                margin-bottom: 10px;
+            }
+            .print-header h1 {
+                margin: 0;
+                font-size: 18px;
+            }
+            .print-header p {
+                margin: 2px 0;
+                font-size: 12px;
+            }
+            .info-section {
+                margin-bottom: 10px;
+                font-size: 12px;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 10px;
+            }
+            th, td {
+                padding: 4px;
+                text-align: right;
+                border: 1px solid #ddd;
+                font-size: 12px;
+            }
+            .totals {
+                width: 100%;
+                margin-top: 10px;
+            }
+            .totals td:first-child {
+                font-weight: bold;
+            }
+            .footer {
+                margin-top: 20px;
+                text-align: center;
+                font-size: 10px;
+            }
+            .qr-code {
+                text-align: center;
+                margin: 10px 0;
+            }
+            @page {
+                margin: 10mm;
+                size: 80mm 297mm;
             }
         }
     </style>
 </head>
 <body>
-    <div class="invoice-header">
+    <div class="print-header">
         <h1>نظام المبيعات</h1>
         <p>فاتورة ضريبية مبسطة</p>
         <p>رقم الفاتورة: {{ $invoice->invoice_number }}</p>
@@ -137,7 +133,7 @@
     </table>
 
     @if($invoice->notes)
-    <div style="margin-top: 20px;">
+    <div style="margin-top: 10px;">
         <strong>ملاحظات:</strong>
         <p>{{ $invoice->notes }}</p>
     </div>
@@ -145,13 +141,16 @@
 
     <div class="qr-code" style="text-align: center; margin: 15px 0;">
         <div style="display: inline-block; text-align: center;">
-            <img src="data:image/svg+xml;base64,{{ base64_encode($qrCode) }}" alt="QR Code" style="width: 150px; height: 150px;">
+            @php
+                $zatcaQr = \App\Services\ZatcaQrCode::generate($invoice);
+            @endphp
+            <img src="data:image/svg+xml;base64,{{ base64_encode($zatcaQr['qr_code']) }}" alt="QR Code" style="width: 150px; height: 150px;">
             <div style="margin-top: 5px; font-size: 10px;">
                 {{ config('app.name') }} - الفاتورة #{{ $invoice->invoice_number }}
             </div>
             <!--
             <div style="font-size: 8px; margin-top: 5px; word-break: break-all; direction: ltr;">
-                {{ $tlvData }}
+                {{ $zatcaQr['base64'] }}
             </div>
             -->
         </div>
@@ -161,5 +160,11 @@
         <p>شكراً لتعاملكم معنا</p>
         <p>{{ config('app.name') }} - {{ date('Y') }}</p>
     </div>
+
+    <script>
+        window.onload = function() {
+            window.print();
+        }
+    </script>
 </body>
 </html>

@@ -8,7 +8,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
-use PDF;
+use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as PDF;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use App\Services\ZatcaQrCode;
 
 class InvoiceController extends Controller
 {
@@ -58,7 +60,7 @@ class InvoiceController extends Controller
             $invoice->discount = $request->discount ?? 0;
             $invoice->paid_amount = $request->paid_amount;
             $invoice->notes = $request->notes;
-            $invoice->created_by = auth()->id();
+            $invoice->created_by = Auth::id();
             
             $subtotal = 0;
             
@@ -142,9 +144,32 @@ class InvoiceController extends Controller
     {
         $invoice->load(['customer', 'items.product', 'createdBy']);
         
-        $pdf = PDF::loadView('invoices.print', compact('invoice'));
+        // إنشاء QR Code متوافق مع معايير ZATCA
+        $zatcaQr = ZatcaQrCode::generate($invoice);
+        
+        $config = [
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'orientation' => 'P',
+            'margin_left' => 10,
+            'margin_right' => 10,
+            'margin_top' => 10,
+            'margin_bottom' => 10,
+        ];
+
+        $pdf = PDF::loadView('invoices.print', [
+            'invoice' => $invoice,
+            'qrCode' => $zatcaQr['qr_code'],
+            'tlvData' => $zatcaQr['tlv_data']
+        ], $config);
         
         return $pdf->stream('invoice-' . $invoice->invoice_number . '.pdf');
+    }
+
+    public function printDirect(Invoice $invoice)
+    {
+        $invoice->load(['customer', 'items.product', 'createdBy']);
+        return view('invoices.print-direct', compact('invoice'));
     }
 
     public function addPayment(Request $request, Invoice $invoice)

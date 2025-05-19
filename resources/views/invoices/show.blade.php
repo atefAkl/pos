@@ -8,9 +8,14 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">تفاصيل الفاتورة #{{ $invoice->invoice_number }}</h5>
                     <div>
-                        <a href="{{ route('invoices.print', $invoice) }}" class="btn btn-secondary" target="_blank">
-                            <i class="fas fa-print"></i> طباعة
-                        </a>
+                        <div class="btn-group" role="group">
+                            <a href="{{ route('invoices.print', $invoice) }}" class="btn btn-secondary" target="_blank">
+                                <i class="fas fa-file-pdf"></i> PDF
+                            </a>
+                            <a href="{{ route('invoices.print-direct', $invoice) }}" class="btn btn-info" target="_blank">
+                                <i class="fas fa-print"></i> طباعة مباشرة
+                            </a>
+                        </div>
                         @if($invoice->total > $invoice->paid_amount)
                         <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#paymentModal">
                             <i class="fas fa-money-bill-wave"></i> إضافة دفعة

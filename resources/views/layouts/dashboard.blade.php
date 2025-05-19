@@ -16,8 +16,199 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <link href="{{ asset('build/assets/app.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/custom-forms.css') }}" rel="stylesheet">
 
     @stack('styles')
+    <style>
+        /* تنسيقات الخطوط العامة */
+        body {
+            font-size: 12px;
+            line-height: 1.5;
+            font-family: 'Tajawal', sans-serif;
+        }
+        
+        /* تنسيقات النصوص الأساسية */
+        p, div, span, a, td, th, label, input, textarea, select, button {
+            font-size: 12px !important;
+        }
+        
+        /* تنسيقات العناوين */
+        h1 { 
+            font-size: 18px !important;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        h2 { 
+            font-size: 16px !important;
+            font-weight: 600;
+            margin-bottom: 0.875rem;
+        }
+        
+        h3 { 
+            font-size: 15px !important;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+        
+        h4 { 
+            font-size: 14px !important;
+            font-weight: 600;
+            margin-bottom: 0.625rem;
+        }
+        
+        h5 { 
+            font-size: 13px !important;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        h6 { 
+            font-size: 12px !important;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* النصوص الصغيرة */
+        small, .small, .text-sm, .text-muted, .form-text, .text-muted {
+            font-size: 10px !important;
+            line-height: 1.3;
+            opacity: 0.8;
+        }
+        
+        /* تنسيقات الشريط الجانبي */
+        #sidebar {
+            min-width: 210px !important;
+            max-width: 210px !important;
+            transition: all 0.3s ease-in-out;
+            font-size: 12px;
+        }
+        
+        #sidebar .sidebar-header {
+            padding: 15px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        #sidebar .sidebar-header h3 {
+            font-size: 14px;
+            margin: 0;
+        }
+        
+        #sidebar ul li a {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+        
+        #sidebar ul li a i {
+            margin-left: 8px;
+            width: 20px;
+            text-align: center;
+            font-size: 12px;
+        }
+        
+        /* تعديلات للشاشات الصغيرة */
+        @media (max-width: 992px) {
+            #sidebar {
+                margin-right: -210px !important;
+                position: fixed;
+                z-index: 1000;
+            }
+            #sidebar.active {
+                margin-right: 0 !important;
+            }
+        }
+        
+        /* تحسينات إضافية للقراءة */
+        .card {
+            font-size: 12px;
+        }
+        
+        .table {
+            font-size: 12px;
+        }
+        
+        /* تنسيق حقول الإدخال */
+        .form-control, .form-select, .form-control-sm, .form-select-sm, 
+        .form-control:not(select), .form-select:not(select) {
+            height: 36px !important;
+            min-height: 36px !important;
+            max-height: 36px !important;
+            line-height: 1.2 !important;
+            padding: 0.4rem 0.75rem !important;
+            font-size: 12px !important;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* تنسيق حقول الإدخال من نوع select */
+        select.form-control, select.form-select {
+            padding-top: 0.4rem !important;
+            padding-bottom: 0.4rem !important;
+        }
+        
+        /* تنسيق عناصر input-group */
+        .input-group-text {
+            height: 36px !important;
+            padding: 0.4rem 0.75rem !important;
+            font-size: 12px !important;
+            background-color: #f8f9fa;
+            border: 1px solid #ced4da;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* تنسيق النصوص المرتبطة بالحقول */
+        .form-label, label {
+            margin-bottom: 0.3rem !important;
+            font-size: 12px !important;
+            font-weight: 500;
+        }
+        
+        /* تعديل ارتفاع الصفوف في الجداول */
+        .table > :not(caption) > tr > td, 
+        .table > :not(caption) > tr > th {
+            vertical-align: middle !important;
+            height: 36px !important;
+            padding: 0.5rem !important;
+        }
+        
+        /* تنسيق الأزرار */
+        .btn {
+            height: 36px !important;
+            padding: 0.4rem 1rem !important;
+            font-size: 12px !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* تنسيق حقول البحث */
+        .form-control-search {
+            height: 36px !important;
+            padding: 0.4rem 0.75rem !important;
+        }
+        
+        /* تعديل هوامش الصفوف في الجداول */
+        .table > :not(caption) > * > * {
+            padding: 0.5rem 0.5rem !important;
+        }
+        
+        /* تعديل هوامش البطاقات */
+        .card-body {
+            padding: 1rem !important;
+        }
+        
+        /* تعديل هوامش الصفوف */
+        .row {
+            margin-bottom: 0.5rem;
+        }
+        
+        /* تعديل هوامش الأعمدة */
+        .col, [class*='col-'] {
+            padding-right: 0.5rem;
+            padding-left: 0.5rem;
+        }
+    </style>
 </head>
 <body>
     <div class="wrapper d-flex">

@@ -5,10 +5,66 @@ body {
 
 /* Sidebar */
 #sidebar {
-    min-width: 250px;
-    max-width: 250px;
+    min-width: 320px;  /* زيادة العرض من 280 إلى 320 بكسل */
+    max-width: 320px;  /* زيادة العرض من 280 إلى 320 بكسل */
     min-height: 100vh;
-    transition: all 0.3s;
+    transition: all 0.3s ease-in-out;
+    white-space: nowrap;
+    overflow: hidden;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    background-color: #343a40;
+}
+
+#sidebar .sidebar-header {
+    padding: 20px 15px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#sidebar .sidebar-header h3 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+#sidebar ul {
+    padding: 10px 0;
+    margin: 0;
+}
+
+#sidebar ul li {
+    list-style: none;
+    margin: 5px 10px;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+#sidebar ul li a {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+    color: #dee2e6;
+    text-decoration: none;
+    font-size: 1rem;
+}
+
+#sidebar ul li a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding-right: 25px;
+}
+
+#sidebar ul li a i {
+    margin-left: 12px;
+    width: 24px;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+#sidebar ul li.active > a {
+    background-color: #0d6efd;
+    color: white;
 }
 
 #sidebar.active {
@@ -27,12 +83,22 @@ body {
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
     #sidebar {
-        margin-right: -250px;
+        margin-right: -320px;  /* تحديث القيمة لتتوافق مع العرض الجديد */
+        position: fixed;
+        z-index: 1000;
+        height: 100vh;
+        overflow-y: auto;
+        box-shadow: 2px 0 15px rgba(0, 0, 0, 0.2);
     }
     #sidebar.active {
         margin-right: 0;
+    }
+    #content {
+        width: 100%;
+        margin-right: 0;
+        transition: margin-right 0.3s ease-in-out;
     }
 }
 
