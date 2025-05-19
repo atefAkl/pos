@@ -8,10 +8,14 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LocaleController;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Language switching route
+Route::get('locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 
 Auth::routes();
 
