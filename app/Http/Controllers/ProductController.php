@@ -20,48 +20,48 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $query = Product::with(['category', 'supplier', 'brand']);
-        
+
         // Apply search filter
         if ($request->has('search') && !empty($request->search)) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%$search%")
-                  ->orWhere('code', 'like', "%$search%")
-                  ->orWhere('barcode', 'like', "%$search%")
-                  ->orWhere('sku', 'like', "%$search%");
+                    ->orWhere('code', 'like', "%$search%")
+                    ->orWhere('barcode', 'like', "%$search%")
+                    ->orWhere('sku', 'like', "%$search%");
             });
         }
-        
+
         // Filter by category
         if ($request->has('category') && !empty($request->category)) {
             $query->where('category_id', $request->category);
         }
-        
+
         // Filter by type (product/service)
         if ($request->has('type') && in_array($request->type, ['product', 'service'])) {
             $query->where('is_service', $request->type === 'service');
         }
-        
+
         // Filter by status
         if ($request->has('status') && in_array($request->status, ['0', '1'])) {
             $query->where('active', $request->status);
         }
-        
+
         // Filter by stock status
         if ($request->has('stock')) {
             if ($request->stock === 'low') {
                 $query->where('quantity', '<=', DB::raw('alert_quantity'))
-                      ->where('quantity', '>', 0);
+                    ->where('quantity', '>', 0);
             } elseif ($request->stock === 'out') {
                 $query->where('quantity', '<=', 0);
             }
         }
-        
+
         // Order by creation date by default
         $products = $query->latest()->paginate(25);
-        
-        $categories = Category::where('active', true)->get();
-        
+
+        $categories = Category::where('is_active', true)->get();
+
         return view('products.index', compact('products', 'categories'));
     }
 
@@ -75,7 +75,7 @@ class ProductController extends Controller
         // Get the latest barcode and increment by 10
         $latestBarcode = Product::max('barcode');
         $newBarcode = $latestBarcode ? ((int)$latestBarcode + 10) : 1000000000000; // Start with 13 digits if no barcode exists
-        
+
         return response()->json([
             'success' => true,
             'barcode' => (string)$newBarcode
@@ -84,14 +84,14 @@ class ProductController extends Controller
 
     public function create()
     {
-        $categories = Category::where('active', true)->get();
+        $categories = Category::where('is_active', true)->get();
         $suppliers = Supplier::where('is_active', true)->get();
         $brands = Brand::where('is_active', true)->get();
-        
+
         // Generate initial barcode
         $latestBarcode = Product::max('barcode');
         $newBarcode = $latestBarcode ? ((int)$latestBarcode + 10) : 1000000000000;
-        
+
         return view('products.create', compact('categories', 'suppliers', 'brands', 'newBarcode'));
     }
 
@@ -129,7 +129,7 @@ class ProductController extends Controller
         }
 
         $data = $request->except('image');
-        
+
         // Handle image upload
         if ($request->hasFile('image')) {
             $uploadPath = 'uploads/products';
@@ -140,12 +140,12 @@ class ProductController extends Controller
             $request->file('image')->move(public_path($uploadPath), $fileName);
             $data['image'] = $uploadPath . '/' . $fileName;
         }
-        
+
         // Set default values
         $data['retail_price'] = $data['retail_price'] ?? $data['price'];
         $data['active'] = $request->has('active');
         $data['is_service'] = $request->has('is_service');
-        
+
         // If it's a service, set quantity to 0
         if ($data['is_service']) {
             $data['quantity'] = 0;
@@ -203,14 +203,14 @@ class ProductController extends Controller
         }
 
         $data = $request->except('image');
-        
+
         // Handle image upload
         if ($request->hasFile('image')) {
             // Delete old image if exists
             if ($product->image && file_exists(public_path($product->image))) {
                 unlink(public_path($product->image));
             }
-            
+
             $uploadPath = 'uploads/products';
             if (!file_exists(public_path($uploadPath))) {
                 mkdir(public_path($uploadPath), 0777, true);
@@ -219,12 +219,12 @@ class ProductController extends Controller
             $request->file('image')->move(public_path($uploadPath), $fileName);
             $data['image'] = $uploadPath . '/' . $fileName;
         }
-        
+
         // Set default values
         $data['retail_price'] = $data['retail_price'] ?? $data['price'];
         $data['active'] = $request->has('active');
         $data['is_service'] = $request->has('is_service');
-        
+
         // If it's a service, set quantity to 0
         if ($data['is_service']) {
             $data['quantity'] = 0;
@@ -244,14 +244,14 @@ class ProductController extends Controller
         $product->update([
             'active' => !$product->active
         ]);
-        
+
         return response()->json([
             'success' => true,
             'message' => 'تم تحديث حالة ' . ($product->is_service ? 'الخدمة' : 'المنتج') . ' بنجاح',
             'is_active' => $product->active
         ]);
     }
-    
+
     /**
      * Update a specific field for a product
      */
@@ -259,17 +259,17 @@ class ProductController extends Controller
     {
         $field = $request->input('field');
         $value = $request->input('value');
-        
+
         // Validate the field is allowed to be updated
         $allowedFields = ['price', 'retail_price', 'wholesale_price', 'wholesale_quantity', 'quantity', 'alert_quantity'];
-        
+
         if (!in_array($field, $allowedFields)) {
             return response()->json([
                 'success' => false,
                 'message' => 'لا يمكن تحديث هذا الحقل'
             ], 400);
         }
-        
+
         // Validate the value based on field type
         $validator = Validator::make($request->all(), [
             'value' => [
@@ -283,24 +283,24 @@ class ProductController extends Controller
                 },
             ],
         ]);
-        
+
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => $validator->errors()->first()
             ], 422);
         }
-        
+
         // Update the field
         $product->update([$field => $value]);
-        
+
         return response()->json([
             'success' => true,
             'message' => 'تم التحديث بنجاح',
             'formatted_value' => $this->formatFieldValue($field, $value)
         ]);
     }
-    
+
     /**
      * Format field value for display
      */
@@ -311,7 +311,7 @@ class ProductController extends Controller
         }
         return $value;
     }
-    
+
     /**
      * Show import form
      */
@@ -319,7 +319,7 @@ class ProductController extends Controller
     {
         return view('products.import');
     }
-    
+
     /**
      * Import products from file
      */
@@ -329,23 +329,22 @@ class ProductController extends Controller
             'file' => 'required|file|mimes:xlsx,xls,csv|max:5120', // 5MB max
             'update_existing' => 'boolean'
         ]);
-        
+
         try {
             $import = new ProductsImport($request->boolean('update_existing'));
             Excel::import($import, $request->file('file'));
-            
+
             $imported = $import->getRowCount();
             $updated = $import->getUpdatedCount();
-            
+
             return redirect()->route('products.index')
                 ->with('success', sprintf('تم استيراد %d منتج وتحديث %d منتج بنجاح', $imported, $updated));
-                
         } catch (\Exception $e) {
             return redirect()->back()
                 ->with('error', 'حدث خطأ أثناء استيراد الملف: ' . $e->getMessage());
         }
     }
-    
+
     /**
      * Export products to Excel
      */
@@ -353,16 +352,16 @@ class ProductController extends Controller
     {
         $type = $request->get('type', 'xlsx');
         $filename = 'products_' . now()->format('Y-m-d_H-i-s');
-        
+
         if ($type === 'pdf') {
             $products = Product::with(['category', 'supplier', 'brand'])->get();
             $pdf = PDF::loadView('exports.products_pdf', compact('products'));
             return $pdf->download($filename . '.pdf');
         }
-        
+
         return Excel::download(new ProductsExport, $filename . '.' . $type);
     }
-    
+
     public function destroy(Product $product)
     {
         // Check if product has any related records
@@ -370,15 +369,15 @@ class ProductController extends Controller
             return redirect()->back()
                 ->with('error', 'لا يمكن حذف ' . ($product->is_service ? 'الخدمة' : 'المنتج') . ' لأنه مرتبط بفواتير سابقة');
         }
-        
+
         // Delete product image if exists
         if ($product->image && file_exists(public_path($product->image))) {
             unlink(public_path($product->image));
         }
-        
+
         $isService = $product->is_service;
         $product->delete();
-        
+
         return redirect()->route('products.index')
             ->with('success', 'تم حذف ' . ($isService ? 'الخدمة' : 'المنتج') . ' بنجاح');
     }

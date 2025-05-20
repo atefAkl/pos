@@ -18,11 +18,13 @@ class Product extends Model
         'barcode',
         'sku',
         'price',
+        'tax_id',
         'tax_rate',
         'retail_price',
         'wholesale_price',
         'wholesale_quantity',
         'quantity',
+        'unit_id',
         'unit',
         'weight',
         'dimensions',
@@ -53,7 +55,9 @@ class Product extends Model
         'reorder_level' => 'integer',
         'category_id' => 'integer',
         'sub_category_id' => 'integer',
-        'parent_category_id' => 'integer'
+        'parent_category_id' => 'integer',
+        'tax_id' => 'integer',
+        'unit_id' => 'integer'
     ];
     
     protected $appends = [
@@ -155,6 +159,22 @@ class Product extends Model
     public function brand()
     {
         return $this->belongsTo(Brand::class);
+    }
+    
+    /**
+     * Get the unit that owns the product
+     */
+    public function unitOfMeasure()
+    {
+        return $this->belongsTo(Unit::class, 'unit_id');
+    }
+    
+    /**
+     * Get the tax that applies to the product
+     */
+    public function tax()
+    {
+        return $this->belongsTo(Tax::class);
     }
     
     public function getSellingPrice($quantity = 1)
