@@ -359,12 +359,14 @@ class ProductController extends Controller
             return $pdf->download($filename . '.pdf');
         }
 
-        return Excel::download(new ProductsExport, $filename . '.' . $type);
+        return Excel::download(new \App\Exports\ProductsExport, $filename . '.' . $type);
     }
 
-    public function destroy(Product $product)
+    public function destroy($id)
     {
         // Check if product has any related records
+        $product = Product::find($id);
+        return $product;
         if ($product->invoiceItems()->exists()) {
             return redirect()->back()
                 ->with('error', 'لا يمكن حذف ' . ($product->is_service ? 'الخدمة' : 'المنتج') . ' لأنه مرتبط بفواتير سابقة');

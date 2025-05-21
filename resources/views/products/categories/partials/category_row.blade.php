@@ -86,30 +86,32 @@
     
     <td class="text-center">
         <div class="btn-group btn-group-sm" role="group">
+            
             @if($category->level < 3)
                 <a href="{{ route('categories.create', ['parent_id' => $category->id]) }}" 
-                   class="btn btn-sm btn-outline-success"
+                   class="btn btn-sm p-0"
                    data-bs-toggle="tooltip" title="إضافة فرعي">
                     <i class="fas fa-plus"></i>
                 </a>
             @endif
             
             <a href="{{ route('categories.edit', $category->id) }}" 
-               class="btn btn-sm btn-outline-primary"
+               class="btn btn-sm p-0"
                data-bs-toggle="tooltip" title="تعديل">
                 <i class="fas fa-edit"></i>
             </a>
-            
+            @if(!$category->products_count > 0 || !$hasChildren)
             <button type="button" 
-                    class="btn btn-sm btn-outline-danger"
+                    class="btn btn-sm p-0"
                     data-bs-toggle="modal" 
                     data-bs-target="#deleteCategoryModal"
                     data-category-id="{{ $category->id }}"
-                    {{ $category->products_count > 0 || $hasChildren ? 'disabled' : '' }}
+                    
                     data-bs-toggle="tooltip" 
                     title="{{ $category->products_count > 0 ? 'لا يمكن حذف فئة تحتوي على منتجات' : ($hasChildren ? 'لا يمكن حذف فئة تحتوي على فئات فرعية' : 'حذف') }}">
                 <i class="fas fa-trash"></i>
             </button>
+            @endif
         </div>
     </td>
 </tr>

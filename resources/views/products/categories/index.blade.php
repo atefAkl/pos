@@ -151,7 +151,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                <form id="deleteCategoryForm" method="POST" action="">
+                <form id="deleteCategoryForm" method="POST" action="{{ route('categories.destroy', $category->id) }}">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-danger">حذف</button>

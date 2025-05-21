@@ -1,13 +1,13 @@
 /* Form Styling */
 .form-label {
-    font-size: 0.8rem;
+    font-size: 1rem;
     font-weight: 500;
-    margin-bottom: 0.3rem;
+    margin-bottom: 0.5rem;
     color: #495057;
 }
 
 .input-group-text {
-    font-size: 0.85rem;
+    font-size: 1rem;
     background-color: #f8f9fa;
     border-color: #dee2e6;
     color: #6c757d;
@@ -17,8 +17,8 @@
 
 .form-control, 
 .form-select {
-    font-size: 0.9rem;
-    height: 38px;
+    font-size: 1rem;
+    height: 40px;
     border-radius: 0.25rem;
 }
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class CategoryController extends Controller
 {
@@ -157,15 +158,31 @@ class CategoryController extends Controller
         }
 
         try {
-            $category->update([
-                'name' => $request->name,
-                'description' => $request->description,
-                'is_active' => $request->is_active ?? $category->is_active,
-                'parent_id' => $request->parent_id
-            ]);
-
-            // Update children levels if parent changed
-            if ($category->wasChanged('parent_id')) {
+            // حفظ القيم القديمة للمقارنة
+            $oldParentId = $category->parent_id;
+            $oldLevel = $category->level;
+            
+            // تحديث البيانات
+            $category->name = $request->name;
+            $category->description = $request->description;
+            $category->is_active = $request->has('is_active') ? (bool)$request->is_active : $category->is_active;
+            
+            // تحديث الأب إذا تغير
+            if ($request->has('parent_id') && $request->parent_id != $oldParentId) {
+                $category->parent_id = $request->parent_id;
+                // تحديث المستوى بناءً على الأب الجديد
+                if ($request->parent_id) {
+                    $parent = Category::find($request->parent_id);
+                    $category->level = $parent->level + 1;
+                } else {
+                    $category->level = 1;
+                }
+            }
+            
+            $category->save();
+            
+            // تحديث المستويات الفرعية إذا تغير الأب
+            if ($oldParentId != $category->parent_id) {
                 $this->updateCategoryLevels($category);
             }
 
@@ -207,34 +224,73 @@ class CategoryController extends Controller
     }
 
     /**
+     * التحقق مما إذا كان يمكن حذف الفئة
+     *
+     * @param  \App\Models\Category  $category
+     * @return array
+     */
+    protected function canDeleteCategory($category)
+    {
+        $category = Category::find($category);
+        if ($category->products()->exists()) {
+            return [
+                'can_delete' => false,
+                'message' => 'لا يمكن حذف الفئة لأنها تحتوي على منتجات'
+            ];
+        }
+        
+        if ($category->children()->exists()) {
+            return [
+                'can_delete' => false,
+                'message' => 'لا يمكن حذف الفئة لأنها تحتوي على فئات فرعية'
+            ];
+        }
+        
+        return ['can_delete' => true];
+    }
+    
+    /**
+     * حذف الفئة من قاعدة البيانات
+     *
+     * @param  \App\Models\Category  $category
+     * @return bool
+     */
+    protected function deleteCategory($category)
+    {
+        $category = Category::find($category);
+        try {
+            return $category->delete();
+        } catch (\Exception $e) {
+            \Log::error('فشل في حذف الفئة: ' . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
      * Remove the specified category from storage.
      *
      * @param  \App\Models\Category  $category
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function destroy(Category $category)
+    public function destroy($category)
     {
-        // Check if category has products
-        if ($category->products()->exists()) {
-            return redirect()->back()
-                ->with('error', 'لا يمكن حذف الفئة لأنها تحتوي على منتجات');
+        $category = Category::find($category);
+        // التحقق من إمكانية الحذف
+        $canDelete = $this->canDeleteCategory($category);
+        if (!$canDelete['can_delete']) {
+            return redirect()->back()->with('error', $canDelete['message']);
         }
         
-        // Check if category has children
-        if ($category->children()->exists()) {
-            return redirect()->back()
-                ->with('error', 'لا يمكن حذف الفئة لأنها تحتوي على فئات فرعية');
-        }
-
-        try {
-            $category->delete();
+        // تنفيذ عملية الحذف
+        $deleted = $this->deleteCategory($category);
+        
+        if ($deleted) {
             return redirect()->route('categories.index')
                 ->with('success', 'تم حذف الفئة بنجاح');
-                
-        } catch (\Exception $e) {
-            return redirect()->back()
-                ->with('error', 'حدث خطأ أثناء محاولة حذف الفئة: ' . $e->getMessage());
         }
+        
+        return redirect()->back()
+            ->with('error', 'حدث خطأ غير متوقع أثناء محاولة حذف الفئة');
     }
     
     /**
