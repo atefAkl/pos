@@ -1,6 +1,7 @@
 @extends('layouts.dashboard')
 
 @section('content')
+
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">
@@ -63,28 +64,19 @@
             <div class="collapse mb-4" id="categoryFilters">
                 <form action="{{ route('categories.index') }}" method="GET" class="row g-3">
                     <input type="hidden" name="parent_id" value="{{ request('parent_id') }}">
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <label for="search" class="form-label">بحث</label>
-                        <input type="text" class="form-control" id="search" name="search" value="{{ request('search') }}" placeholder="ابحث بالاسم أو الوصف...">
+                        <input type="text" class="form-control" id="search" name="search" value="{{ request('search') }}" placeholder="ابحث عن فئة...">
                     </div>
                     <div class="col-md-3">
-                        <label for="status" class="form-label">الحالة</label>
-                        <select class="form-select" id="status" name="status">
+                        <label for="is_active" class="form-label">الحالة</label>
+                        <select class="form-select" id="is_active" name="is_active">
                             <option value="">الكل</option>
-                            <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>نشط</option>
-                            <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>غير نشط</option>
+                            <option value="1" {{ request('is_active') == '1' ? 'selected' : '' }}>نشط</option>
+                            <option value="0" {{ request('is_active') == '0' ? 'selected' : '' }}>غير نشط</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
-                        <label for="level" class="form-label">المستوى</label>
-                        <select class="form-select" id="level" name="level">
-                            <option value="">الكل</option>
-                            <option value="1" {{ request('level') === '1' ? 'selected' : '' }}>رئيسي (1)</option>
-                            <option value="2" {{ request('level') === '2' ? 'selected' : '' }}>فرعي (2)</option>
-                            <option value="3" {{ request('level') === '3' ? 'selected' : '' }}>فرعي (3)</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2 d-flex align-items-end">
+                    <div class="col-md-3 d-flex align-items-end">
                         <button type="submit" class="btn btn-primary me-2">
                             <i class="fas fa-search"></i> بحث
                         </button>
@@ -95,44 +87,8 @@
                 </form>
             </div>
 
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover" id="categoriesTable" width="100%" cellspacing="0">
-                    <thead class="table-light">
-                        <tr>
-                            <th width="5%">#</th>
-                            <th>اسم الفئة</th>
-                            <th>المستوى</th>
-                            <th>الوصف</th>
-                            <th width="10%" class="text-center">عدد المنتجات</th>
-                            <th width="10%" class="text-center">الحالة</th>
-                            <th width="15%" class="text-center">الإجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($categories as $category)
-                            @include('products.categories.partials.category_row', ['category' => $category, 'level' => 0])
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center py-4">
-                                    <div class="d-flex flex-column align-items-center">
-                                        <i class="fas fa-folder-open fa-3x text-muted mb-2"></i>
-                                        <p class="text-muted mb-0">لا توجد فئات متاحة</p>
-                                        <a href="{{ route('categories.create', ['parent_id' => request('parent_id')]) }}" class="btn btn-sm btn-primary mt-2">
-                                            <i class="fas fa-plus"></i> إضافة فئة جديدة
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-            @if($categories->hasPages())
-                <div class="d-flex justify-content-center mt-4">
-                    {{ $categories->withQueryString()->links() }}
-                </div>
-            @endif
+            @include('products.categories.partials.category_tree')
+            
         </div>
     </div>
 </div>
@@ -151,7 +107,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                <form id="deleteCategoryForm" method="POST" action="{{ route('categories.destroy', $category->id) }}">
+                <form id="deleteCategoryForm" method="POST" action="">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-danger">حذف</button>
@@ -161,41 +117,108 @@
     </div>
 </div>
 
+@endsection
+
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize delete modal
-    const deleteModal = document.getElementById('deleteCategoryModal');
-    if (deleteModal) {
-        deleteModal.addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget;
-            const categoryId = button.getAttribute('data-category-id');
-            const form = deleteModal.querySelector('#deleteCategoryForm');
-            form.action = `{{ url('dashboard/categories') }}/${categoryId}`;
-        });
-    }
-
-    // Toggle child rows
-    document.querySelectorAll('.toggle-children').forEach(button => {
-        button.addEventListener('click', function() {
-            const parentRow = this.closest('tr');
-            const parentId = parentRow.dataset.id;
-            const childRows = document.querySelectorAll(`tr[data-parent-id="${parentId}"]`);
-            
-            childRows.forEach(row => {
-                row.classList.toggle('d-none');
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize delete modal
+        const deleteModal = document.getElementById('deleteCategoryModal');
+        if (deleteModal) {
+            deleteModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                const categoryId = button.getAttribute('data-category-id');
+                const categoryName = button.getAttribute('data-category-name');
+                const form = deleteModal.querySelector('#deleteCategoryForm');
+                
+                // تحديث رابط الحذف في المودال
+                form.action = form.action.replace(/\/\d+$/, '') + '/' + categoryId;
+                
+                // تحديث نص التأكيد
+                const messageElement = deleteModal.querySelector('#deleteCategoryName');
+                if (messageElement) {
+                    messageElement.textContent = categoryName;
+                }
             });
-            
-            this.innerHTML = this.innerHTML.includes('fa-plus') ? 
-                '<i class="fas fa-minus"></i>' : 
-                '<i class="fas fa-plus"></i>';
+        }
+
+        // التبديل بين عرض وإخفاء الفئات الفرعية
+        document.querySelectorAll('.toggle-children').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                const categoryId = this.getAttribute('data-category-id');
+                const childrenDiv = document.getElementById(`children-${categoryId}`);
+                const icon = this.querySelector('i');
+                
+                if (childrenDiv) {
+                    if (childrenDiv.style.display === 'none' || !childrenDiv.style.display) {
+                        childrenDiv.style.display = 'block';
+                        icon.classList.remove('fa-chevron-right');
+                        icon.classList.add('fa-chevron-down');
+                    } else {
+                        childrenDiv.style.display = 'none';
+                        icon.classList.remove('fa-chevron-down');
+                        icon.classList.add('fa-chevron-right');
+                    }
+                }
+            });
         });
+
+        // فتح جميع الفئات
+        const expandAllBtn = document.getElementById('expandAll');
+        if (expandAllBtn) {
+            expandAllBtn.addEventListener('click', function() {
+                document.querySelectorAll('.children').forEach(div => {
+                    div.style.display = 'block';
+                });
+                document.querySelectorAll('.toggle-children i').forEach(icon => {
+                    icon.classList.remove('fa-chevron-right');
+                    icon.classList.add('fa-chevron-down');
+                });
+            });
+        }
+
+        // إغلاق جميع الفئات
+        const collapseAllBtn = document.getElementById('collapseAll');
+        if (collapseAllBtn) {
+            collapseAllBtn.addEventListener('click', function() {
+                document.querySelectorAll('.children').forEach(div => {
+                    div.style.display = 'none';
+                });
+                document.querySelectorAll('.toggle-children i').forEach(icon => {
+                    icon.classList.remove('fa-chevron-down');
+                    icon.classList.add('fa-chevron-right');
+                });
+            });
+        }
     });
-});
 </script>
 @endpush
 
+
+
+@push('styles')
 <style>
+    .category-tree .list-group-item {
+        border-radius: 0.25rem;
+        margin-bottom: 0.25rem;
+    }
+    .category-tree .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+    .toggle-children {
+        cursor: pointer;
+        width: 20px;
+        display: inline-block;
+    }
+    .toggle-children i {
+        transition: transform 0.2s;
+    }
+    .toggle-children:hover i {
+        color: #0d6efd !important;
+    }
+
+
+    
     .category-row td {
         vertical-align: middle;
     }
@@ -226,11 +249,7 @@ document.addEventListener('DOMContentLoaded', function() {
         outline: none;
         box-shadow: none;
     }
-</style>
-@endsection
 
-@push('styles')
-<style>
     .btn-group {
         gap: 5px;
     }

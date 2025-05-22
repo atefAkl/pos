@@ -9,10 +9,62 @@ use Illuminate\Support\Facades\Log;
 
 class CategoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $categories = Category::withCount('products')->paginate(10);
-        return view('products.categories.index', compact('categories'));
+        // بناء الاستعلام الأساسي
+        $query = Category::query();
+        return ['is_active'=>$request->query('is_active'), 'search'=>$request->query('search'), 'parent_id'=>$request->query('parent_id')];
+        // فلترة حسب الفئة الأب
+        if ($request->has('parent_id')) {
+            $query->where('parent_id', $request->query('parent_id'));
+        } else {
+            $query->whereNull('parent_id');
+        }
+        
+        // تطبيق فلتر البحث عن طريق الاسم
+        if ($request->filled('search')) {
+            $searchTerm = '%' . $request->query('search') . '%';
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('name', 'LIKE', $searchTerm)
+                  ->orWhere('description', 'LIKE', $searchTerm);
+            });
+        }
+        
+        // تطبيق فلتر الحالة
+        if ($request->has('is_active') && $request->is_active !== '') {
+            $query->where('is_active', $request->is_active);
+        }
+        
+        // جلب النتائج مع العلاقات والعد
+        $categories = $query->with(['children' => function($q) use ($request) {
+                $q->withCount('products');
+                
+                // تطبيق نفس شروط البحث على الفئات الفرعية
+                if ($request->filled('search')) {
+                    $searchTerm = '%' . $request->search . '%';
+                    $q->where(function($subQ) use ($searchTerm) {
+                        $subQ->where('name', 'LIKE', $searchTerm)
+                             ->orWhere('description', 'LIKE', $searchTerm);
+                    });
+                }
+                
+                if ($request->has('is_active') && $request->is_active !== '') {
+                    $q->where('is_active', $request->is_active);
+                }
+                
+                $q->orderBy('name');
+            }])
+            ->withCount('products')
+            ->orderBy('name')
+            ->get();
+        
+        // تمرير معلمات البحث للعرض
+        $searchParams = $request->only(['search', 'is_active']);
+        if ($request->has('parent_id')) {
+            $searchParams['parent_id'] = $request->parent_id;
+        }
+            
+        return view('products.categories.index', compact('categories', 'searchParams'));
     }
 
     /**
@@ -24,6 +76,7 @@ class CategoryController extends Controller
     public function create(Request $request)
     {
         $parentId = $request->query('parent_id');
+        
         $parent = null;
         $level = 1;
         
@@ -37,8 +90,19 @@ class CategoryController extends Controller
             }
         }
         
-        $parentCategories = Category::where('level', 1)->where('is_active', true)->get();
-        $subCategories = $parent ? Category::where('parent_id', $parent->id)->where('is_active', true)->get() : collect();
+        // جلب جميع الفئات النشطة من المستوى الأول مع فرزها بالاسم
+        $parentCategories = Category::where('level', '<', $level)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+            
+        // جلب الفئات الفرعية النشطة للفئة الحالية مع فرزها بالاسم
+        $subCategories = $parent 
+            ? Category::where('parent_id', $parent->id)
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get() 
+            : collect();
         
         return view('products.categories.create', compact('parent', 'level', 'parentCategories', 'subCategories'));
     }
@@ -102,6 +166,7 @@ class CategoryController extends Controller
      */
     public function edit(Category $category)
     {
+
         $parentCategories = Category::where('level', 1)
             ->where('id', '!=', $category->id)
             ->where('is_active', true)
@@ -231,15 +296,15 @@ class CategoryController extends Controller
      */
     protected function canDeleteCategory($category)
     {
-        $category = Category::find($category);
-        if ($category->products()->exists()) {
+        
+        if ($category->products()->count() > 0) {
             return [
                 'can_delete' => false,
                 'message' => 'لا يمكن حذف الفئة لأنها تحتوي على منتجات'
             ];
         }
         
-        if ($category->children()->exists()) {
+        if ($category->children()->count() > 0) {
             return [
                 'can_delete' => false,
                 'message' => 'لا يمكن حذف الفئة لأنها تحتوي على فئات فرعية'
@@ -257,11 +322,11 @@ class CategoryController extends Controller
      */
     protected function deleteCategory($category)
     {
-        $category = Category::find($category);
         try {
-            return $category->delete();
+            $category->delete();
+            return true;
         } catch (\Exception $e) {
-            \Log::error('فشل في حذف الفئة: ' . $e->getMessage());
+            Log::error('فشل في حذف الفئة: ' . $e->getMessage());
             return false;
         }
     }
@@ -272,9 +337,11 @@ class CategoryController extends Controller
      * @param  \App\Models\Category  $category
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function destroy($category)
+    public function destroy($id)
     {
-        $category = Category::find($category);
+        $category = Category::find($id);
+
+        
         // التحقق من إمكانية الحذف
         $canDelete = $this->canDeleteCategory($category);
         if (!$canDelete['can_delete']) {

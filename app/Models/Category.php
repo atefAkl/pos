@@ -85,6 +85,26 @@ class Category extends Model
     {
         return $this->level === 3;
     }
+    
+    /**
+     * Check if the category is a descendant of another category
+     *
+     * @param Category $parent
+     * @return bool
+     */
+    public function isDescendantOf(Category $parent)
+    {
+        $current = $this->parent;
+        
+        while ($current) {
+            if ($current->id === $parent->id) {
+                return true;
+            }
+            $current = $current->parent;
+        }
+        
+        return false;
+    }
 
     // Get all active categories
     public static function getActiveCategories()
