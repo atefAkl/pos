@@ -3,68 +3,33 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Services\CategorySearchService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 
 class CategoryController extends Controller
 {
+    protected $categorySearchService;
+
+    public function __construct(CategorySearchService $categorySearchService)
+    {
+        $this->categorySearchService = $categorySearchService;
+    }
+
+    /**
+     * عرض قائمة الفئات مع إمكانية البحث والتصفية
+     */
     public function index(Request $request)
     {
-        // بناء الاستعلام الأساسي
-        $query = Category::query();
-        return ['is_active'=>$request->query('is_active'), 'search'=>$request->query('search'), 'parent_id'=>$request->query('parent_id')];
-        // فلترة حسب الفئة الأب
-        if ($request->has('parent_id')) {
-            $query->where('parent_id', $request->query('parent_id'));
-        } else {
-            $query->whereNull('parent_id');
-        }
+        $result = $this->categorySearchService->search($request);
         
-        // تطبيق فلتر البحث عن طريق الاسم
-        if ($request->filled('search')) {
-            $searchTerm = '%' . $request->query('search') . '%';
-            $query->where(function($q) use ($searchTerm) {
-                $q->where('name', 'LIKE', $searchTerm)
-                  ->orWhere('description', 'LIKE', $searchTerm);
-            });
-        }
-        
-        // تطبيق فلتر الحالة
-        if ($request->has('is_active') && $request->is_active !== '') {
-            $query->where('is_active', $request->is_active);
-        }
-        
-        // جلب النتائج مع العلاقات والعد
-        $categories = $query->with(['children' => function($q) use ($request) {
-                $q->withCount('products');
-                
-                // تطبيق نفس شروط البحث على الفئات الفرعية
-                if ($request->filled('search')) {
-                    $searchTerm = '%' . $request->search . '%';
-                    $q->where(function($subQ) use ($searchTerm) {
-                        $subQ->where('name', 'LIKE', $searchTerm)
-                             ->orWhere('description', 'LIKE', $searchTerm);
-                    });
-                }
-                
-                if ($request->has('is_active') && $request->is_active !== '') {
-                    $q->where('is_active', $request->is_active);
-                }
-                
-                $q->orderBy('name');
-            }])
-            ->withCount('products')
-            ->orderBy('name')
-            ->get();
-        
-        // تمرير معلمات البحث للعرض
-        $searchParams = $request->only(['search', 'is_active']);
-        if ($request->has('parent_id')) {
-            $searchParams['parent_id'] = $request->parent_id;
+        // إذا كان الطلب AJAX، نرجع جزء العرض فقط
+        if ($request->ajax() || $request->has('ajax')) {
+            return view('products.categories.partials.category_tree', $result)->render();
         }
             
-        return view('products.categories.index', compact('categories', 'searchParams'));
+        return view('products.categories.index', $result);
     }
 
     /**

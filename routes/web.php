@@ -68,18 +68,32 @@ Route::middleware(['auth'])->group(function () {
         Route::post('import', [ProductController::class, 'import'])->name('products.import');
         Route::get('export', [ProductController::class, 'export'])->name('products.export');
         
-        // تحديث حقل معين للمنتج (AJAX)
-        Route::patch('{product}/update-field', [ProductController::class, 'updateField'])
-            ->name('products.update-field');
+        // مسارات الباركود
+        Route::get('{product}/print-barcode', [ProductController::class, 'printBarcode'])
+            ->name('products.print-barcode');
             
-        // توليد باركود جديد
-        Route::get('generate-barcode', [ProductController::class, 'generateBarcode'])
-            ->name('products.generate-barcode');
+        // مسارات العروض
+        Route::get('{product}/offers/create', [ProductController::class, 'createOffer'])->name('products.offers.create');
+        Route::post('{product}/offers', [ProductController::class, 'storeOffer'])->name('products.offers.store');
+            
+        // تحديث حقل معين للمنتج (AJAX)
+        Route::patch('{product}/update-field', [ProductController::class, 'updateField'])->name('products.update-field');
+            
+        // توليد الأكواد تلقائيًا
+        Route::get('generate-barcode', [ProductController::class, 'generateBarcode'])->name('products.generate-barcode');
+            
+        // توليد كود منتج جديد
+        Route::get('generate-product-code', [ProductController::class, 'generateProductCode'])->name('products.generate-product-code');
+            
+        // توليد SKU جديد
+        Route::get('generate-sku', [ProductController::class, 'generateSKU'])->name('products.generate-sku');
+        Route::get('discount', [ProductController::class, 'discount'])->name('products.discount');
     });
     
     // مسارات الفئات
     Route::prefix('categories')->name('categories.')->group(function () {
         Route::get('/', [CategoryController::class, 'index'])->name('index');
+        Route::get('/search', [CategoryController::class, 'index'])->name('search'); // مسار البحث عبر AJAX
         Route::get('/create', [CategoryController::class, 'create'])->name('create');
         Route::post('/', [CategoryController::class, 'store'])->name('store');
         Route::get('/{category}/edit', [CategoryController::class, 'edit'])->name('edit');

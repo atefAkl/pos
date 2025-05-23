@@ -1,5 +1,9 @@
 @extends('layouts.dashboard')
 
+@push('styles')
+<link href="{{ asset('css/categories.css') }}" rel="stylesheet">
+@endpush
+
 @section('content')
 
 <div class="container-fluid">
@@ -61,8 +65,8 @@
             </div>
         </div>
         <div class="card-body">
-            <div class="collapse mb-4" id="categoryFilters">
-                <form action="{{ route('categories.index') }}" method="GET" class="row g-3">
+            <div class="collapse mb-4 show" id="categoryFilters">
+                <form id="categorySearchForm" class="row g-3">
                     <input type="hidden" name="parent_id" value="{{ request('parent_id') }}">
                     <div class="col-md-6">
                         <label for="search" class="form-label">بحث</label>
@@ -80,14 +84,16 @@
                         <button type="submit" class="btn btn-primary me-2">
                             <i class="fas fa-search"></i> بحث
                         </button>
-                        <a href="{{ route('categories.index', ['parent_id' => request('parent_id')]) }}" class="btn btn-secondary">
+                        <a href="{{ route('categories.index', ['parent_id' => request('parent_id')]) }}" class="btn btn-secondary" id="resetSearch">
                             <i class="fas fa-undo"></i> إعادة تعيين
                         </a>
                     </div>
                 </form>
             </div>
 
-            @include('products.categories.partials.category_tree')
+            <div id="categoryTreeContainer">
+                @include('products.categories.partials.category_tree')
+            </div>
             
         </div>
     </div>
@@ -120,9 +126,10 @@
 @endsection
 
 @push('scripts')
+<script src="{{ asset('js/categories.js') }}"></script>
 <script>
+    // تهيئة مودال الحذف
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize delete modal
         const deleteModal = document.getElementById('deleteCategoryModal');
         if (deleteModal) {
             deleteModal.addEventListener('show.bs.modal', function (event) {
@@ -141,53 +148,13 @@
                 }
             });
         }
-
-        // التبديل بين عرض وإخفاء الفئات الفرعية
-        document.querySelectorAll('.toggle-children').forEach(toggle => {
-            toggle.addEventListener('click', function() {
-                const categoryId = this.getAttribute('data-category-id');
-                const childrenDiv = document.getElementById(`children-${categoryId}`);
-                const icon = this.querySelector('i');
-                
-                if (childrenDiv) {
-                    if (childrenDiv.style.display === 'none' || !childrenDiv.style.display) {
-                        childrenDiv.style.display = 'block';
-                        icon.classList.remove('fa-chevron-right');
-                        icon.classList.add('fa-chevron-down');
-                    } else {
-                        childrenDiv.style.display = 'none';
-                        icon.classList.remove('fa-chevron-down');
-                        icon.classList.add('fa-chevron-right');
-                    }
-                }
-            });
-        });
-
-        // فتح جميع الفئات
-        const expandAllBtn = document.getElementById('expandAll');
-        if (expandAllBtn) {
-            expandAllBtn.addEventListener('click', function() {
-                document.querySelectorAll('.children').forEach(div => {
-                    div.style.display = 'block';
-                });
-                document.querySelectorAll('.toggle-children i').forEach(icon => {
-                    icon.classList.remove('fa-chevron-right');
-                    icon.classList.add('fa-chevron-down');
-                });
-            });
-        }
-
-        // إغلاق جميع الفئات
-        const collapseAllBtn = document.getElementById('collapseAll');
-        if (collapseAllBtn) {
-            collapseAllBtn.addEventListener('click', function() {
-                document.querySelectorAll('.children').forEach(div => {
-                    div.style.display = 'none';
-                });
-                document.querySelectorAll('.toggle-children i').forEach(icon => {
-                    icon.classList.remove('fa-chevron-down');
-                    icon.classList.add('fa-chevron-right');
-                });
+        
+        // إعادة تعيين البحث
+        const resetSearchBtn = document.getElementById('resetSearch');
+        if (resetSearchBtn) {
+            resetSearchBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = this.href;
             });
         }
     });

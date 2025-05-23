@@ -4,45 +4,74 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const generateBarcodeBtn = document.getElementById('generateBarcode');
-    const barcodeInput = document.getElementById('barcode');
-    
-    if (generateBarcodeBtn && barcodeInput) {
-        generateBarcodeBtn.addEventListener('click', function() {
-            // Show loading state
-            const originalText = generateBarcodeBtn.innerHTML;
-            generateBarcodeBtn.disabled = true;
-            generateBarcodeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التوليد...';
-            
-            // Call the API to generate a new barcode
-            fetch('{{ route("products.generate-barcode") }}', {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    barcodeInput.value = data.barcode;
-                    // Trigger change event in case there are any listeners
-                    barcodeInput.dispatchEvent(new Event('change'));
-                } else {
-                    console.error('Failed to generate barcode');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            })
-            .finally(() => {
-                // Reset button state
-                generateBarcodeBtn.disabled = false;
-                generateBarcodeBtn.innerHTML = '<i class="fas fa-sync-alt"></i> توليد';
+    // Function to handle button click and API call
+    function setupGenerateButton(buttonId, inputId, routeName, loadingText, iconClass) {
+        const button = document.getElementById(buttonId);
+        const input = document.getElementById(inputId);
+        
+        if (button && input) {
+            button.addEventListener('click', function() {
+                // Show loading state
+                const originalText = button.innerHTML;
+                button.disabled = true;
+                button.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${loadingText}`;
+                
+                // Call the API to generate the code
+                fetch(routeName, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const fieldName = Object.keys(data).find(key => key !== 'success');
+                        input.value = data[fieldName];
+                        // Trigger change event in case there are any listeners
+                        input.dispatchEvent(new Event('change'));
+                    } else {
+                        console.error(`Failed to generate ${inputId}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                })
+                .finally(() => {
+                    // Reset button state
+                    button.disabled = false;
+                    button.innerHTML = `<i class="${iconClass}"></i> توليد`;
+                });
             });
-        });
+        }
     }
+    
+    // Setup all generate buttons
+    setupGenerateButton(
+        'generateBarcode', 
+        'barcode', 
+        '{{ route("products.generate-barcode") }}',
+        'جاري توليد الباركود...',
+        'fas fa-sync-alt'
+    );
+    
+    setupGenerateButton(
+        'generateProductCode', 
+        'code', 
+        '{{ route("products.generate-product-code") }}',
+        'جاري توليد الكود...',
+        'fas fa-barcode'
+    );
+    
+    setupGenerateButton(
+        'generateSKU', 
+        'sku', 
+        '{{ route("products.generate-sku") }}',
+        'جاري توليد SKU...',
+        'fas fa-hashtag'
+    );
 });
 </script>
 @endpush
@@ -124,7 +153,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-barcode"></i></span>
                             <input type="text" class="form-control @error('code') is-invalid @enderror" 
-                                id="code" name="code" value="{{ old('code') }}">
+                                id="code" name="code" value="{{ old('code', $newProductCode ?? '') }}" required>
+                            <button class="btn btn-outline-secondary" type="button" id="generateProductCode">
+                                <i class="fas fa-barcode"></i> توليد
+                            </button>
                             @error('code')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -152,7 +184,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-hashtag"></i></span>
                             <input type="text" class="form-control @error('sku') is-invalid @enderror" 
-                                id="sku" name="sku" value="{{ old('sku') }}">
+                                id="sku" name="sku" value="{{ old('sku') }}" required>
+                            <button class="btn btn-outline-secondary" type="button" id="generateSKU">
+                                <i class="fas fa-hashtag"></i> توليد
+                            </button>
                             @error('sku')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror

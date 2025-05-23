@@ -6,11 +6,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Log;
+use App\Models\Offer;
+use Picqer\Barcode\BarcodeGeneratorPNG;
 
-class Product extends Model
+class Product extends Model implements HasMedia
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, InteractsWithMedia;
 
     protected $fillable = [
         'name',
@@ -30,9 +35,7 @@ class Product extends Model
         'dimensions',
         'alert_quantity',
         'reorder_level',
-        'category_id',      // Level 3 category (child category)
-        'sub_category_id',  // Level 2 category
-        'parent_category_id', // Level 1 category
+        'category_id', // Level 1 category
         'supplier_id',
         'brand_id',
         'description',
@@ -54,8 +57,6 @@ class Product extends Model
         'service_duration' => 'integer',
         'reorder_level' => 'integer',
         'category_id' => 'integer',
-        'sub_category_id' => 'integer',
-        'parent_category_id' => 'integer',
         'tax_id' => 'integer',
         'unit_id' => 'integer'
     ];
@@ -83,13 +84,7 @@ class Product extends Model
             if ($product->isDirty('category_id') && !is_null($product->category_id)) {
                 $category = Category::find($product->category_id);
                 if ($category) {
-                    $product->sub_category_id = $category->parent_id;
-                    if (!is_null($category->parent_id)) {
-                        $parentCategory = Category::find($category->parent_id);
-                        if ($parentCategory) {
-                            $product->parent_category_id = $parentCategory->parent_id;
-                        }
-                    }
+                    $product->category_id = $category->id;
                 }
             }
         });
@@ -150,6 +145,27 @@ class Product extends Model
     {
         return $this->hasMany(InvoiceItem::class);
     }
+
+    // Media Helper methods
+    public function addMediaToGallery($file)
+    {
+        return $this->addMedia($file)->toMediaCollection('gallery');
+    }
+    
+    public function getGalleryMedia()
+    {
+        return $this->getMedia('gallery');
+    }
+    
+    public function addDocument($file)
+    {
+        return $this->addMedia($file)->toMediaCollection('documents');
+    }
+    
+    public function getDocuments()
+    {
+        return $this->getMedia('documents');
+    }
     
     public function supplier()
     {
@@ -177,12 +193,93 @@ class Product extends Model
         return $this->belongsTo(Tax::class);
     }
     
+    /**
+     * العلاقة مع العروض الخاصة بالمنتج
+     */
+    public function offers()
+    {
+        return $this->hasMany(Offer::class);
+    }
+    
+    /**
+     * الحصول على العرض النشط الحالي للمنتج
+     */
+    public function activeOffer()
+    {
+        return $this->hasOne(Offer::class)
+            ->where('is_active', true)
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->latest();
+    }
+    
     public function getSellingPrice($quantity = 1)
     {
         if ($this->wholesale_price && $this->wholesale_quantity && $quantity >= $this->wholesale_quantity) {
             return $this->wholesale_price;
         }
         return $this->retail_price ?? $this->price;
+    }
+    
+    /**
+     * حساب هامش الربح كنسبة مئوية
+     */
+    public function getProfitMarginAttribute()
+    {
+        if (!$this->price || $this->price <= 0) {
+            return 0;
+        }
+        
+        $sellingPrice = $this->retail_price ?? $this->price;
+        $cost = $this->price;
+        
+        if ($sellingPrice <= $cost) {
+            return 0;
+        }
+        
+        return round((($sellingPrice - $cost) / $cost) * 100, 2);
+    }
+    
+    /**
+     * حساب القيمة الإجمالية للمخزون (الكمية × سعر التكلفة)
+     */
+    public function getStockValueAttribute()
+    {
+        $quantity = $this->quantity ?? 0;
+        $cost = $this->price ?? 0;
+        
+        return $quantity * $cost;
+    }
+    
+    /**
+     * التحقق مما إذا كانت كمية المخزون أقل من أو تساوي مستوى التنبيه
+     */
+    public function getIsLowStockAttribute()
+    {
+        $quantity = $this->quantity ?? 0;
+        $alertQuantity = $this->alert_quantity ?? 0;
+        
+        return $quantity <= $alertQuantity;
+    }
+    
+    /**
+     * إنشاء رابط صورة الباركود
+     */
+    public function getBarcodeImageUrlAttribute()
+    {
+        if (empty($this->barcode)) {
+            return null;
+        }
+        
+        try {
+            $generator = new BarcodeGeneratorPNG();
+            $barcodeData = $generator->getBarcode($this->barcode, $generator::TYPE_CODE_128);
+            $base64 = 'data:image/png;base64,' . base64_encode($barcodeData);
+            return $base64;
+        } catch (\Exception $e) {
+            \Log::error('Failed to generate barcode: ' . $e->getMessage());
+            return null;
+        }
     }
     
     public function scopeActive($query)

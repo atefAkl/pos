@@ -180,16 +180,16 @@
                             </td>
                             <td>
                                 <div class="btn-group btn-group-sm" role="group">
+                                    <form action="{{ route('products.destroy', $product) }}" method="POST" class="d-inline" 
+                                    onsubmit="return confirm('هل أنت متأكد من حذف {{ $product->is_service ? 'هذه الخدمة' : 'هذا المنتج' }}؟')">
+                                    @csrf
+                                    @method('DELETE')
                                     <a href="{{ route('products.show', $product) }}" class="btn btn-info" title="عرض">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     <a href="{{ route('products.edit', $product) }}" class="btn btn-primary" title="تعديل">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form action="{{ route('products.destroy', $product) }}" method="POST" class="d-inline" 
-                                        onsubmit="return confirm('هل أنت متأكد من حذف {{ $product->is_service ? 'هذه الخدمة' : 'هذا المنتج' }}؟')">
-                                        @csrf
-                                        @method('DELETE')
                                         <button type="submit" class="btn btn-danger" title="حذف">
                                             <i class="fas fa-trash"></i>
                                         </button>

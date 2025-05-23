@@ -26,4 +26,9 @@ class Unit extends Model
     {
         return $this->hasMany(Product::class);
     }
+
+    public static function active()
+    {
+        return self::where('is_active', true);
+    }
 }

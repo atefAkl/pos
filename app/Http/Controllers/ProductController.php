@@ -6,14 +6,18 @@ use App\Models\Product;
 use App\Models\Category;
 use App\Models\Supplier;
 use App\Models\Brand;
+use App\Models\Unit;
+use App\Models\Tax;
+use App\Models\Offer;
 use App\Imports\ProductsImport;
 use App\Exports\ProductsExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use PDF;
-use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class ProductController extends Controller
 {
@@ -82,17 +86,80 @@ class ProductController extends Controller
         ]);
     }
 
+    /**
+     * Generate a new product code
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function generateProductCode()
+    {
+        // Get the latest product code and increment by 1
+        $latestCode = Product::whereNotNull('code')
+            ->where('code', 'like', 'PRD-%')
+            ->orderBy('id', 'desc')
+            ->first();
+            
+        if ($latestCode) {
+            $number = (int) str_replace('PRD-', '', $latestCode->code) + 1;
+        } else {
+            $number = 1000; // Starting number
+        }
+        
+        $newCode = 'PRD-' . str_pad($number, 4, '0', STR_PAD_LEFT);
+        
+        return response()->json([
+            'success' => true,
+            'code' => $newCode
+        ]);
+    }
+    
+    /**
+     * Generate a new SKU
+     * 
+     * @return \Illuminate\Http\Response
+     */
+    public function generateSKU()
+    {
+        // Generate a random 8-character alphanumeric SKU
+        $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $sku = 'SKU-';
+        
+        for ($i = 0; $i < 8; $i++) {
+            $sku .= $characters[rand(0, strlen($characters) - 1)];
+        }
+        
+        // Make sure SKU is unique
+        while (Product::where('sku', $sku)->exists()) {
+            $sku = 'SKU-';
+            for ($i = 0; $i < 8; $i++) {
+                $sku .= $characters[rand(0, strlen($characters) - 1)];
+            }
+        }
+        
+        return response()->json([
+            'success' => true,
+            'sku' => $sku
+        ]);
+    }
+    
     public function create()
     {
         $categories = Category::where('is_active', true)->get();
         $suppliers = Supplier::where('is_active', true)->get();
         $brands = Brand::where('is_active', true)->get();
 
-        // Generate initial barcode
+        // Generate initial codes
         $latestBarcode = Product::max('barcode');
         $newBarcode = $latestBarcode ? ((int)$latestBarcode + 10) : 1000000000000;
+        
+        // Generate initial product code
+        $latestCode = Product::whereNotNull('code')
+            ->where('code', 'like', 'PRD-%')
+            ->orderBy('id', 'desc')
+            ->first();
+        $newProductCode = $latestCode ? 'PRD-' . str_pad((int)str_replace('PRD-', '', $latestCode->code) + 1, 4, '0', STR_PAD_LEFT) : 'PRD-1000';
 
-        return view('products.create', compact('categories', 'suppliers', 'brands', 'newBarcode'));
+        return view('products.create', compact('categories', 'suppliers', 'brands', 'newBarcode', 'newProductCode'));
     }
 
     public function store(Request $request)
@@ -159,14 +226,85 @@ class ProductController extends Controller
 
     public function show(Product $product)
     {
-        $product->load('category');
+        $product->load(['category', 'offers' => function($query) {
+            $query->where('is_active', true)
+                  ->where('start_date', '<=', now())
+                  ->where('end_date', '>=', now());
+        }]);
+        
         return view('products.show', compact('product'));
     }
 
     public function edit(Product $product)
     {
-        $categories = Category::where('active', true)->get();
-        return view('products.edit', compact('product', 'categories'));
+        $categories = Category::where('is_active', true)->get();
+        $suppliers = Supplier::where('is_active', true)->get();
+        $brands = Brand::where('is_active', true)->get();
+        $units = Unit::where('is_active', true)->get();
+        $taxes = Tax::where('is_active', true)->get();
+        
+        // تحميل العروض النشطة للمنتج
+        $product->load(['offers' => function($query) {
+            $query->where('is_active', true)
+                  ->where('start_date', '<=', now())
+                  ->where('end_date', '>=', now())
+                  ->orderBy('end_date', 'desc');
+        }]);
+        
+        return view('products.edit_enhanced', compact(
+            'product', 
+            'categories', 
+            'suppliers', 
+            'brands', 
+            'units', 
+            'taxes'
+        ));
+    }
+    
+    /**
+     * طباعة الباركود للمنتج
+     */
+    public function printBarcode(Product $product)
+    {
+        if (empty($product->barcode)) {
+            return back()->with('error', 'لا يوجد باركود لهذا المنتج');
+        }
+        
+        $barcodeType = 'C128';
+        $barcodeHeight = 50;
+        $barcodeWidth = 2;
+        
+        return view('products.barcodes.print', compact('product', 'barcodeType', 'barcodeHeight', 'barcodeWidth'));
+    }
+
+    /**
+     * إنشاء عرض خاص للمنتج
+     */
+    public function createOffer(Product $product)
+    {
+        return view('products.offers.create', compact('product'));
+    }
+    
+    /**
+     * حفظ العرض الخاص بالمنتج
+     */
+    public function storeOffer(Request $request, Product $product)
+    {
+        $validated = $request->validate([
+            'offer_price' => 'required|numeric|min:0',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after:start_date',
+            'is_active' => 'boolean'
+        ]);
+        
+        // إنشاء علاقة مع نموذج Offer إذا كان موجوداً
+        if (method_exists($product, 'offers')) {
+            $product->offers()->create($validated);
+            return redirect()->route('products.show', $product)
+                ->with('success', 'تم إضافة العرض بنجاح');
+        }
+        
+        return back()->with('error', 'لا يمكن إضافة عرض لهذا المنتج');
     }
 
     public function update(Request $request, Product $product)

@@ -100,6 +100,7 @@
                data-bs-toggle="tooltip" title="تعديل">
                 <i class="fas fa-edit"></i>
             </a>
+           
             @if(!$category->products_count > 0 || !$hasChildren)
             <button type="button" 
                     class="btn btn-sm p-0"

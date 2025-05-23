@@ -15,7 +15,9 @@
         "laravel/tinker": "^2.10.1",
         "laravel/ui": "^4.6",
         "maatwebsite/excel": "^3.1",
+        "picqer/php-barcode-generator": "^3.2",
         "simplesoftwareio/simple-qrcode": "^4.2",
+        "spatie/laravel-medialibrary": "^11.13",
         "spatie/laravel-permission": "^6.18"
     },
     "require-dev": {
