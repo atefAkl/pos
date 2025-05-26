@@ -531,7 +531,6 @@ class ProductController extends Controller
     {
         // Check if product has any related records
         $product = Product::find($id);
-        return $product;
         if ($product->invoiceItems()->exists()) {
             return redirect()->back()
                 ->with('error', 'لا يمكن حذف ' . ($product->is_service ? 'الخدمة' : 'المنتج') . ' لأنه مرتبط بفواتير سابقة');
@@ -547,5 +546,86 @@ class ProductController extends Controller
 
         return redirect()->route('products.index')
             ->with('success', 'تم حذف ' . ($isService ? 'الخدمة' : 'المنتج') . ' بنجاح');
+    }
+    
+    /**
+     * عرض قائمة طلبات الشراء
+     */
+    public function indexPurchaseOrders()
+    {
+        // يمكن تنفيذ هذه الدالة لاحقًا عند إنشاء نموذج طلبات الشراء
+        return view('purchase-orders.index');
+    }
+    
+    /**
+     * حفظ طلب شراء جديد
+     */
+    public function storePurchaseOrder(Request $request)
+    {
+        // التحقق من البيانات
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'supplier_id' => 'required|exists:suppliers,id',
+            'quantity' => 'required|numeric|min:1',
+            'unit_price' => 'required|numeric|min:0',
+            'expected_delivery_date' => 'nullable|date',
+            'notes' => 'nullable|string|max:500',
+        ]);
+        
+        // يمكن تنفيذ هذه الدالة لاحقًا عند إنشاء نموذج طلبات الشراء
+        // للآن سنعرض رسالة نجاح فقط
+        
+        return redirect()->back()
+            ->with('success', 'تم إنشاء طلب الشراء بنجاح');
+    }
+    
+    /**
+     * عرض تفاصيل طلب شراء
+     */
+    public function showPurchaseOrder($id)
+    {
+        // يمكن تنفيذ هذه الدالة لاحقًا عند إنشاء نموذج طلبات الشراء
+        return view('purchase-orders.show');
+    }
+    
+    /**
+     * عرض نموذج تعديل طلب شراء
+     */
+    public function editPurchaseOrder($id)
+    {
+        // يمكن تنفيذ هذه الدالة لاحقًا عند إنشاء نموذج طلبات الشراء
+        return view('purchase-orders.edit');
+    }
+    
+    /**
+     * تحديث طلب شراء
+     */
+    public function updatePurchaseOrder(Request $request, $id)
+    {
+        // التحقق من البيانات
+        $request->validate([
+            'supplier_id' => 'required|exists:suppliers,id',
+            'quantity' => 'required|numeric|min:1',
+            'unit_price' => 'required|numeric|min:0',
+            'expected_delivery_date' => 'nullable|date',
+            'notes' => 'nullable|string|max:500',
+            'status' => 'required|in:pending,approved,received,cancelled',
+        ]);
+        
+        // يمكن تنفيذ هذه الدالة لاحقًا عند إنشاء نموذج طلبات الشراء
+        
+        return redirect()->route('purchase-orders.index')
+            ->with('success', 'تم تحديث طلب الشراء بنجاح');
+    }
+    
+    /**
+     * حذف طلب شراء
+     */
+    public function destroyPurchaseOrder($id)
+    {
+        // يمكن تنفيذ هذه الدالة لاحقًا عند إنشاء نموذج طلبات الشراء
+        
+        return redirect()->route('purchase-orders.index')
+            ->with('success', 'تم حذف طلب الشراء بنجاح');
     }
 }

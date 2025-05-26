@@ -59,7 +59,7 @@
 <script>
 // تغيير لاحقة قيمة الخصم حسب النوع
 document.getElementById('discount_type').addEventListener('change', function() {
-    const suffix = this.value === 'percentage' ? '%' : '{{ currency_symbol() }}';
+    const suffix = this.value === 'percentage' ? '%' : '{{ config("settings.currency_symbol") }}';
     document.getElementById('discount_suffix').textContent = suffix;
     
     // تحديث الحد الأقصى للقيمة إذا كانت نسبة مئوية

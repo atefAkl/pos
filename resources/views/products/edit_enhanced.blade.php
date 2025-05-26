@@ -1,5 +1,15 @@
 @extends('layouts.dashboard')
 
+@push('styles')
+<!-- مكتبة toastr للإشعارات -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+@endpush
+
+@push('scripts')
+<!-- مكتبة toastr للإشعارات -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+@endpush
+
 @section('content')
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
@@ -158,12 +168,27 @@ document.getElementById('productForm').addEventListener('submit', function(e) {
             'X-HTTP-Method-Override': 'PUT'
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        // التحقق من نوع المحتوى قبل محاولة تحليل JSON
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return response.json();
+        } else {
+            // إذا لم تكن الاستجابة JSON، نعيد النص العادي
+            return response.text().then(text => {
+                return { success: response.ok, message: text };
+            });
+        }
+    })
     .then(data => {
         if (data.success) {
             toastr.success('تم تحديث المنتج بنجاح');
+            // إعادة تحميل الصفحة بعد فترة قصيرة
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
         } else {
-            toastr.error('حدث خطأ أثناء تحديث المنتج');
+            toastr.error(data.message || 'حدث خطأ أثناء تحديث المنتج');
         }
     })
     .catch(error => {
