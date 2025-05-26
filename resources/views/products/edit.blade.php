@@ -11,7 +11,7 @@
 
     <div class="card">
         <div class="card-body">
-            <form action="{{ route('products.update', $product) }}" method="POST">
+            <form id="productEditForm" action="{{ route('products.update', $product) }}" method="POST">
                 @csrf
                 @method('PUT')
                 <div class="row">
@@ -103,10 +103,68 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save"></i> حفظ التغييرات
                         </button>
+                        <a href="{{ route('products.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-home"></i> إلغاء
+                        </a>
                     </div>
                 </div>
             </form>
         </div>
     </div>
 </div>
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM fully loaded');
+        const form = document.getElementById('productEditForm');
+        
+        if (!form) {
+            console.error('Form not found');
+            return;
+        }
+        
+        console.log('Form found, adding event listeners');
+        
+        // Form submission handler
+        form.addEventListener('submit', function(e) {
+            console.log('Form submission started');
+            
+            // Temporarily disable validation for debugging
+            const forceSubmit = true;
+            
+            if (!forceSubmit && !form.checkValidity()) {
+                console.log('Form validation failed');
+                e.preventDefault();
+                e.stopPropagation();
+                form.classList.add('was-validated');
+                
+                // Show all validation messages
+                const invalidFields = form.querySelectorAll(':invalid');
+                invalidFields.forEach(field => {
+                    field.classList.add('is-invalid');
+                    console.log('Invalid field:', field.name, field.validationMessage);
+                });
+                console.log('Form submission prevented due to validation errors');
+                return false;
+            }
+            
+            console.log('Form is valid, submitting...');
+            
+            // Show loading state on submit button
+            const submitButton = form.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+            }
+            
+            // If we reach here, the form will submit normally
+            console.log('Allowing form submission');
+            return true;
+        });
+        
+        console.log('Form initialization complete');
+    });
+</script>
+@endpush
+
 @endsection

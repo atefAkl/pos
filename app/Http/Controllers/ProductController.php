@@ -142,9 +142,14 @@ class ProductController extends Controller
         ]);
     }
     
-    public function create()
+    public function create(Request $request)
     {
-        $categories = Category::where('is_active', true)->get();
+        // جلب الفئات من المستوى الثالث مع مسارها الكامل
+        $categories = Category::getThirdLevelWithPath();
+        
+        // الحصول على معرف الفئة من الطلب إذا كان موجوداً
+        $selectedCategoryId = $request->query('category_id');
+        
         $suppliers = Supplier::where('is_active', true)->get();
         $brands = Brand::where('is_active', true)->get();
 
@@ -159,7 +164,7 @@ class ProductController extends Controller
             ->first();
         $newProductCode = $latestCode ? 'PRD-' . str_pad((int)str_replace('PRD-', '', $latestCode->code) + 1, 4, '0', STR_PAD_LEFT) : 'PRD-1000';
 
-        return view('products.create', compact('categories', 'suppliers', 'brands', 'newBarcode', 'newProductCode'));
+        return view('products.create', compact('categories', 'selectedCategoryId', 'suppliers', 'brands', 'newBarcode', 'newProductCode'));
     }
 
     public function store(Request $request)
@@ -286,6 +291,42 @@ class ProductController extends Controller
     }
     
     /**
+     * Update the media (images) of the specified product.
+     */
+    public function updateMedia(Request $request, Product $product)
+    {
+        // تحديث الصورة الرئيسية
+        $uploadPath = 'uploads/products/gallery';
+        
+        if ($request->hasFile('image')) {
+            // حذف الصورة القديمة من uploads/products/gallery
+            $oldPath = public_path('uploads/' . $product->image);
+            if ($product->image && file_exists($oldPath)) {
+                unlink($oldPath);
+            }
+            $fileName = time() . '_' . $request->file('image')->getClientOriginalName();
+            $request->file('image')->move(public_path($uploadPath), $fileName);
+            $product->update([
+                'image' => 'products/gallery/' . $fileName,
+            ]);
+        }
+
+        // تحديث معرض الصور
+        if ($request->hasFile('gallery')) {
+            foreach ($request->file('gallery') as $image) {
+                $fileName = time() . '_' . $image->getClientOriginalName();
+                $image->move(public_path($uploadPath), $fileName);
+                $product->images()->create([
+                    'path' => 'products/gallery/' . $fileName,
+                ]);
+            }
+        }
+
+        return redirect()->back()
+            ->with('success', 'تم تحديث الوسائط بنجاح');
+    }
+
+    /**
      * حفظ العرض الخاص بالمنتج
      */
     public function storeOffer(Request $request, Product $product)
@@ -309,6 +350,7 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
+        return public_path();
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'code' => 'nullable|string|unique:products,code,' . $product->id,
@@ -349,7 +391,7 @@ class ProductController extends Controller
                 unlink(public_path($product->image));
             }
 
-            $uploadPath = 'uploads/products';
+            $uploadPath = 'uploads/products/gallery';
             if (!file_exists(public_path($uploadPath))) {
                 mkdir(public_path($uploadPath), 0777, true);
             }

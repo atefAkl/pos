@@ -130,22 +130,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
 
                     <div class="col-md-6">
-                        <label for="category_id" class="form-label small text-muted mb-1">الفئة <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-folder"></i></span>
-                            <select class="form-select @error('category_id') is-invalid @enderror" 
-                                id="category_id" name="category_id" required>
-                                <option value="">اختر الفئة</option>
-                                @foreach($categories as $category)
-                                    <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
-                                        {{ $category->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('category_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                        <label for="category_id" class="form-label small text-muted mb-1">التصنيف <span class="text-danger">*</span></label>
+                        <select class="form-select @error('category_id') is-invalid @enderror" id="category_id" name="category_id" required>
+                            <option value="">اختر التصنيف</option>
+                            @foreach($categories as $category)
+                                <option value="{{ $category->id }}" {{ (old('category_id', $selectedCategoryId) == $category->id) ? 'selected' : '' }}>
+                                    {{ $category->full_path }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('category_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="col-md-4">

@@ -37,6 +37,9 @@
         },
         "classmap": [
             "app/Services/"
+        ],
+        "files": [
+            "app/Helpers/CurrencyHelper.php"
         ]
     },
     "autoload-dev": {

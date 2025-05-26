@@ -25,64 +25,68 @@
         </div>
         
         <div class="card-body">
-            <form id="productForm" action="{{ route('products.update', $product) }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                @method('PUT')
-                
-                <ul class="nav nav-tabs" id="productTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab">
-                            <i class="fas fa-info-circle"></i> المعلومات الأساسية
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="pricing-tab" data-bs-toggle="tab" data-bs-target="#pricing" type="button" role="tab">
-                            <i class="fas fa-tags"></i> التسعير والمخزون
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab">
-                            <i class="fas fa-info-circle"></i> التفاصيل الإضافية
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="media-tab" data-bs-toggle="tab" data-bs-target="#media" type="button" role="tab">
-                            <i class="fas fa-images"></i> الوسائط
-                        </button>
-                    </li>
-                </ul>
-
-                <div class="tab-content p-3 border border-top-0 rounded-bottom" id="productTabsContent">
-                    <!-- تبويب المعلومات الأساسية -->
-                    <div class="tab-pane fade show active" id="basic" role="tabpanel">
-                        @include('products.partials.basic_info', ['product' => $product, 'categories' => $categories])
-                    </div>
-                    
-                    <!-- تبويب التسعير والمخزون -->
-                    <div class="tab-pane fade" id="pricing" role="tabpanel">
-                        @include('products.partials.pricing_inventory', ['product' => $product])
-                    </div>
-                    
-                    <!-- تبويب التفاصيل الإضافية -->
-                    <div class="tab-pane fade" id="details" role="tabpanel">
-                        @include('products.partials.additional_details', ['product' => $product])
-                    </div>
-                    
-                    <!-- تبويب الوسائط -->
-                    <div class="tab-pane fade" id="media" role="tabpanel">
-                        @include('products.partials.media', ['product' => $product])
-                    </div>
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
-                
-                <div class="text-center mt-4">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> حفظ التغييرات
+            @endif
+            
+            @if($errors->any())
+                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                    <ul class="mb-0">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+            
+            <ul class="nav nav-tabs" id="productTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab">
+                        <i class="fas fa-info-circle"></i> المعلومات الأساسية
                     </button>
-                    <a href="{{ route('products.index') }}" class="btn btn-secondary">
-                        <i class="fas fa-times"></i> إلغاء
-                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="pricing-tab" data-bs-toggle="tab" data-bs-target="#pricing" type="button" role="tab">
+                        <i class="fas fa-tags"></i> التسعير والمخزون
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab">
+                        <i class="fas fa-info-circle"></i> التفاصيل الإضافية
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="media-tab" data-bs-toggle="tab" data-bs-target="#media" type="button" role="tab">
+                        <i class="fas fa-images"></i> الوسائط
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content p-3 border border-top-0 rounded-bottom" id="productTabsContent">
+                <!-- تبويب المعلومات الأساسية -->
+                <div class="tab-pane fade show active" id="basic" role="tabpanel">
+                    @include('products.partials.basic_info_form', ['product' => $product, 'categories' => $categories])
                 </div>
-            </form>
+                
+                <!-- تبويب التسعير والمخزون -->
+                <div class="tab-pane fade" id="pricing" role="tabpanel">
+                    @include('products.partials.pricing_form', ['product' => $product])
+                </div>
+                
+                <!-- تبويب التفاصيل الإضافية -->
+                <div class="tab-pane fade" id="details" role="tabpanel">
+                    @include('products.partials.details_form', ['product' => $product])
+                </div>
+                
+                <!-- تبويب الوسائط -->
+                <div class="tab-pane fade" id="media" role="tabpanel">
+                    @include('products.partials.media_form', ['product' => $product])
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -131,45 +135,72 @@ productTabs.forEach(function(tab) {
     tab.addEventListener('click', function (event) {
         // حفظ التبويب النشط في التخزين المحلي
         localStorage.setItem('activeProductTab', event.target.getAttribute('data-bs-target'));
-    })
-})
+    });
+});
 
 // استعادة التبويب النشط عند إعادة تحميل الصفحة
 document.addEventListener('DOMContentLoaded', function() {
     var activeTab = localStorage.getItem('activeProductTab');
     if (activeTab) {
-        var tab = new bootstrap.Tab(document.querySelector(`[data-bs-target="${activeTab}"]`));
-        tab.show();
+        var tabElement = document.querySelector(`[data-bs-target="${activeTab}"]`);
+        if (tabElement) {
+            var tab = new bootstrap.Tab(tabElement);
+            tab.show();
+        }
     }
-});
-
-// حفظ النموذج باستخدام AJAX
-document.getElementById('productForm').addEventListener('submit', function(e) {
-    e.preventDefault();
     
-    const form = e.target;
-    const formData = new FormData(form);
-    
-    fetch(form.action, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'X-HTTP-Method-Override': 'PUT'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            toastr.success('تم تحديث المنتج بنجاح');
-        } else {
-            toastr.error('حدث خطأ أثناء تحديث المنتج');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        toastr.error('حدث خطأ غير متوقع');
+    // إضافة مؤشر التحميل للنماذج
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function() {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+            }
+        });
     });
 });
+
+// عرض معاينة الصورة
+function previewImage(input, previewId) {
+    const preview = document.getElementById(previewId);
+    const file = input.files[0];
+    
+    if (file) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+        }
+        
+        reader.readAsDataURL(file);
+    } else {
+        preview.src = "{{ $product->image ? asset('storage/' . $product->image) : asset('img/no-image.png') }}";
+    }
+}
+
+// حذف صورة من المعرض
+function deleteImage(imageId) {
+    if (confirm('هل أنت متأكد من حذف هذه الصورة؟')) {
+        fetch(`/product-images/${imageId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById(`image-${imageId}`).remove();
+                if (document.querySelectorAll('#galleryPreview > div').length === 0) {
+                    document.getElementById('galleryPreview').innerHTML = '<div class="col-12 text-center text-muted">لا توجد صور في المعرض</div>';
+                }
+            }
+        });
+    }
+}
 </script>
 @endpush

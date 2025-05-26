@@ -92,6 +92,49 @@ class Category extends Model
      * @param Category $parent
      * @return bool
      */
+    /**
+     * الحصول على الفئات من المستوى الثالث مع مسارها الكامل
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public static function getThirdLevelWithPath()
+    {
+        // جلب الفئات من المستوى الثالث فقط
+        $categories = static::where('level', 3)
+            ->with(['parent.parent']) // تحميل الأجداد
+            ->orderBy('name')
+            ->get();
+            
+        // إضافة مسار الاسم الكامل
+        return $categories->map(function($category) {
+            $path = [];
+            
+            // إضافة الجد (المستوى الأول) إذا موجود
+            if ($category->parent && $category->parent->parent) {
+                $path[] = $category->parent->parent->name;
+            }
+            
+            // إضافة الأب (المستوى الثاني) إذا موجود
+            if ($category->parent) {
+                $path[] = $category->parent->name;
+            }
+            
+            // إضافة الاسم الحالي (المستوى الثالث)
+            $path[] = $category->name;
+            
+            // تعيين المسار الكامل كخاصية جديدة
+            $category->full_path = implode(' > ', $path);
+            
+            return $category;
+        });
+    }
+    
+    /**
+     * Check if the category is a descendant of another category
+     *
+     * @param Category $parent
+     * @return bool
+     */
     public function isDescendantOf(Category $parent)
     {
         $current = $this->parent;

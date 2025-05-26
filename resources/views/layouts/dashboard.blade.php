@@ -318,17 +318,31 @@
 
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script>
+        // Check if jQuery is loaded
+        window.jQuery || document.write('<script src="https://code.jquery.com/jquery-3.7.1.min.js"><\/script>');
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>
-    <script src="{{ asset('build/assets/app.js') }}" defer></script>
-
+    
     <script>
-        $(document).ready(function() {
-            $('#sidebarCollapse').on('click', function() {
-                $('#sidebar').toggleClass('active');
-            });
+        // Initialize sidebar toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.getElementById('sidebarCollapse');
+            const sidebar = document.getElementById('sidebar');
+            
+            if (sidebarToggle && sidebar) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('active');
+                });
+            }
+            
+            console.log('jQuery version:', $.fn.jquery);
         });
     </script>
+    
+    <!-- Load app.js without defer to ensure it runs after jQuery -->
+    <script src="{{ asset('build/assets/app.js') }}"></script>
 
     @stack('scripts')
 </body>

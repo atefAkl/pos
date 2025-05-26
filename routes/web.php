@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\PosController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\ProductImageController;
 use App\Http\Controllers\ProductSettingsController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\TaxController;
@@ -21,6 +23,29 @@ Route::get('/', function () {
 Route::get('locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 
 Auth::routes();
+
+// Temporary route to check database tables
+Route::get('/check-tables', function() {
+    try {
+        $tables = DB::select('SHOW TABLES');
+        $db = 'Tables_in_' . DB::connection()->getDatabaseName();
+        return array_map(function($table) use ($db) {
+            return $table->$db;
+        }, $tables);
+    } catch (\Exception $e) {
+        return 'Error: ' . $e->getMessage();
+    }
+})->middleware('auth');
+
+// Test route for currency symbol
+Route::get('/test-currency-symbol', function() {
+    if (function_exists('currency_symbol')) {
+        return 'Currency symbol function exists. Symbol: ' . currency_symbol();
+    } else {
+        return 'Currency symbol function does not exist';
+    }
+});
+
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home');
@@ -56,7 +81,18 @@ Route::middleware(['auth'])->group(function () {
     
     // مسارات المنتجات
     Route::resource('products', ProductController::class);
-    
+
+    // مسارات تعديل المنتج منفصلة
+    Route::put('/products/{product}/update-basic', [ProductController::class, 'updateBasic'])->name('products.update-basic');
+    Route::put('/products/{product}/update-pricing', [ProductController::class, 'updatePricing'])->name('products.update-pricing');
+    Route::put('/products/{product}/update-details', [ProductController::class, 'updateDetails'])->name('products.update-details');
+    Route::put('/products/{product}/update-media', [ProductController::class, 'updateMedia'])->name('products.update-media');
+
+    // مسار حذف صورة من المعرض
+    Route::delete('/product-images/{image}', [ProductImageController::class, 'destroy'])->name('product-images.destroy');
+    Route::put('/product-images/{image}', [ProductImageController::class, 'update'])->name('product-images.update');
+    Route::post('/product-images/{image}/replace', [ProductImageController::class, 'replace'])->name('product-images.replace');
+        
     // مسارات إضافية للمنتجات
     Route::prefix('products')->group(function () {
         // تغيير حالة المنتج (نشط/غير نشط)

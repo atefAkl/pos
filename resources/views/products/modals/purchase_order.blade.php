@@ -6,7 +6,7 @@
                 <h5 class="modal-title">إنشاء طلب شراء</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('purchase-orders.store') }}" method="POST">
+            <form action="" method="POST">
                 @csrf
                 <input type="hidden" name="product_id" value="{{ $product->id }}">
                 
@@ -98,28 +98,39 @@
 <script>
 // حساب الكمية المطلوبة بناءً على حد إعادة الطلب
 function calculateRequiredQuantity() {
+    const quantityInput = document.getElementById('quantity');
+    if (!quantityInput) return;
+    
     const currentQuantity = {{ $product->quantity }};
     const reorderLevel = {{ $product->reorder_level }};
     
     if (currentQuantity < reorderLevel) {
-        document.getElementById('quantity').value = reorderLevel - currentQuantity;
+        quantityInput.value = reorderLevel - currentQuantity;
     } else {
-        document.getElementById('quantity').value = 1;
+        quantityInput.value = 1;
     }
 }
 
-// تحديث السعر المتوقع عند تغيير المورد
-document.getElementById('supplier_id').addEventListener('change', function() {
-    // يمكنك إضافة منطق لجلب آخر سعر شراء من هذا المورد
-    // هذا مثال بسيط
-    const supplierId = this.value;
-    if (supplierId) {
-        // يمكنك إضافة استدعاء AJAX للحصول على آخر سعر شراء من هذا المورد
-        // document.getElementById('expected_price').value = lastPurchasePrice;
-    }
-});
-
-// حساب الكمية المطلوبة عند تحميل الصفحة
-document.addEventListener('DOMContentLoaded', calculateRequiredQuantity);
+// تهيئة النافذة المنبثقة
+const purchaseOrderModal = document.getElementById('purchaseOrderModal');
+if (purchaseOrderModal) {
+    purchaseOrderModal.addEventListener('shown.bs.modal', function() {
+        // حساب الكمية المطلوبة عند فتح النافذة
+        calculateRequiredQuantity();
+        
+        // إضافة مستمع حدث لتغيير المورد
+        const supplierSelect = document.getElementById('supplier_id');
+        if (supplierSelect) {
+            supplierSelect.addEventListener('change', function() {
+                // يمكنك إضافة منطق لجلب آخر سعر شراء من هذا المورد
+                const supplierId = this.value;
+                if (supplierId) {
+                    // يمكنك إضافة استدعاء AJAX للحصول على آخر سعر شراء من هذا المورد
+                    // document.getElementById('expected_price').value = lastPurchasePrice;
+                }
+            });
+        }
+    });
+}
 </script>
 @endpush

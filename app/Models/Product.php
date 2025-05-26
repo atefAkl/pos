@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Log;
 use App\Models\Offer;
 use Picqer\Barcode\BarcodeGeneratorPNG;
+use App\Models\ProductImage;
 
 class Product extends Model implements HasMedia
 {
@@ -191,6 +192,14 @@ class Product extends Model implements HasMedia
     public function tax()
     {
         return $this->belongsTo(Tax::class);
+    }
+    
+    /**
+     * Get all images for the product.
+     */
+    public function images()
+    {
+        return $this->hasMany(ProductImage::class);
     }
     
     /**

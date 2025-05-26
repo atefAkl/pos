@@ -58,16 +58,34 @@
 @push('scripts')
 <script>
 // تغيير لاحقة قيمة الخصم حسب النوع
-document.getElementById('discount_type').addEventListener('change', function() {
-    const suffix = this.value === 'percentage' ? '%' : '{{ currency_symbol() }}';
-    document.getElementById('discount_suffix').textContent = suffix;
+document.addEventListener('DOMContentLoaded', function() {
+    const discountType = document.getElementById('discount_type');
+    const updateSuffix = function() {
+        const suffix = discountType.value === 'percentage' ? '%' : ''
+        document.getElementById('discount_suffix').textContent = suffix;
+    };
     
-    // تحديث الحد الأقصى للقيمة إذا كانت نسبة مئوية
-    const valueInput = document.getElementById('discount_value');
-    if (this.value === 'percentage') {
-        valueInput.setAttribute('max', '100');
-    } else {
-        valueInput.removeAttribute('max');
+    if (discountType) {
+        discountType.addEventListener('change', function() {
+            updateSuffix();
+            // تحديث الحد الأقصى للقيمة إذا كانت نسبة مئوية
+            const valueInput = document.getElementById('discount_value');
+            if (discountType.value === 'percentage') {
+                valueInput.setAttribute('max', '100');
+            } else {
+                valueInput.removeAttribute('max');
+            }
+        });
+        // تحديث اللاحقة عند تحميل الصفحة
+        updateSuffix();
+        
+        // تحديث الحد الأقصى للقيمة الابتدائية
+        const valueInput = document.getElementById('discount_value');
+        if (discountType.value === 'percentage') {
+            valueInput.setAttribute('max', '100');
+        } else {
+            valueInput.removeAttribute('max');
+        }
     }
 });
 </script>
