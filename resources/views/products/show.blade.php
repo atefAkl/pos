@@ -33,7 +33,18 @@
                         </tr>
                         <tr>
                             <th>الباركود</th>
-                            <td>{{ $product->barcode ?: 'غير محدد' }}</td>
+                            <td>
+                                @if($product->barcode)
+                                    <div class="d-flex align-items-center">
+                                        <span class="me-3">{{ $product->barcode }}</span>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#barcodeModal">
+                                            <i class="fas fa-barcode"></i> عرض الباركود
+                                        </button>
+                                    </div>
+                                @else
+                                    غير محدد
+                                @endif
+                            </td>
                         </tr>
                         <tr>
                             <th>السعر</th>
@@ -83,4 +94,32 @@
         </div>
     </div>
 </div>
+
+<!-- نافذة منبثقة لعرض الباركود -->
+@if($product->barcode)
+<div class="modal fade" id="barcodeModal" tabindex="-1" aria-labelledby="barcodeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="barcodeModalLabel">باركود المنتج: {{ $product->name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-3">
+                    <img src="{{ $product->barcode_image }}" alt="باركود المنتج" class="img-fluid">
+                    <p class="mt-2 text-center">{{ $product->barcode }}</p>
+                </div>
+                <div class="d-flex justify-content-center">
+                    <a href="{{ route('products.print-barcode', $product) }}" target="_blank" class="btn btn-primary">
+                        <i class="fas fa-print"></i> طباعة الباركود
+                    </a>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 @endsection

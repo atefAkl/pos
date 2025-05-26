@@ -142,9 +142,36 @@ class ProductController extends Controller
         ]);
     }
     
-    public function create()
+    public function create(Request $request)
     {
-        $categories = Category::where('is_active', true)->get();
+        // جلب الفئات من المستوى الثالث فقط مع معلومات الفئات الأب
+        $categories = Category::with(['parent.parent'])
+            ->where('is_active', true)
+            ->where('level', 3)
+            ->get()
+            ->map(function($category) {
+                // إضافة معلومات الفئات الأب إلى اسم الفئة
+                $fullName = $category->name;
+                
+                if ($category->parent) {
+                    $fullName = $category->parent->name . ' > ' . $fullName;
+                    
+                    if ($category->parent->parent) {
+                        $fullName = $category->parent->parent->name . ' > ' . $fullName;
+                    }
+                }
+                
+                // إنشاء نسخة جديدة من الفئة مع الاسم المعدل
+                $category->full_name = $fullName;
+                return $category;
+            });
+            
+        // ترتيب الفئات حسب الاسم الكامل
+        $categories = $categories->sortBy('full_name');
+        
+        // إذا تم تحديد فئة في الطلب، نقوم بتحديدها
+        $selectedCategoryId = $request->has('category_id') ? $request->category_id : null;
+        
         $suppliers = Supplier::where('is_active', true)->get();
         $brands = Brand::where('is_active', true)->get();
 
@@ -159,7 +186,7 @@ class ProductController extends Controller
             ->first();
         $newProductCode = $latestCode ? 'PRD-' . str_pad((int)str_replace('PRD-', '', $latestCode->code) + 1, 4, '0', STR_PAD_LEFT) : 'PRD-1000';
 
-        return view('products.create', compact('categories', 'suppliers', 'brands', 'newBarcode', 'newProductCode'));
+        return view('products.create', compact('categories', 'suppliers', 'brands', 'newBarcode', 'newProductCode', 'selectedCategoryId'));
     }
 
     public function store(Request $request)

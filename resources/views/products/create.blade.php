@@ -137,8 +137,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 id="category_id" name="category_id" required>
                                 <option value="">اختر الفئة</option>
                                 @foreach($categories as $category)
-                                    <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
-                                        {{ $category->name }}
+                                    <option value="{{ $category->id }}" {{ (old('category_id', $selectedCategoryId ?? null) == $category->id) ? 'selected' : '' }}>
+                                        {{ $category->full_name }}
                                     </option>
                                 @endforeach
                             </select>
