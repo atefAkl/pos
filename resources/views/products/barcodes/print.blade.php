@@ -136,22 +136,42 @@ function printBarcodes() {
             <div style="display: flex; flex-wrap: wrap; justify-content: center;">
     `;
     
+    // إنشاء عناصر HTML مخفية لتخزين البيانات
+    document.write(`
+        <div id="productDataContainer" style="display: none;">
+            <div id="productName">{!! addslashes($product->name) !!}</div>
+            <div id="productBarcode">{!! addslashes($product->barcode) !!}</div>
+            <div id="productPrice">{!! number_format($product->retail_price, 2) !!}</div>
+            <div id="productCurrency">{!! config('settings.currency_symbol') !!}</div>
+            <div id="barcodeHtml">{!! (new Picqer\Barcode\BarcodeGeneratorHTML())->getBarcode($product->barcode, $barcodeType) !!}</div>
+        </div>
+    `);
+    
+    // الحصول على البيانات من عناصر HTML المخفية
+    const productData = {
+        name: document.getElementById('productName').innerHTML,
+        barcode: document.getElementById('productBarcode').innerHTML,
+        price: document.getElementById('productPrice').innerHTML,
+        currency: document.getElementById('productCurrency').innerHTML,
+        barcodeHtml: document.getElementById('barcodeHtml').innerHTML
+    };
+    
     for (let i = 0; i < count; i++) {
         content += `
             <div class="barcode-container">
-                <div class="product-name">{{ $product->name }}</div>
+                <div class="product-name">${productData.name}</div>
                 <div class="barcode">
-                    {!! (new Picqer\Barcode\BarcodeGeneratorHTML())->getBarcode($product->barcode, '{{ $barcodeType }}') !!}
+                    ${productData.barcodeHtml}
                 </div>
-                <div class="barcode-label">{{ $product->barcode }}</div>
-                <div class="product-price">السعر: {{ number_format($product->retail_price, 2) }} {{ config('settings.currency_symbol') }}</div>
+                <div class="barcode-label">${productData.barcode}</div>
+                <div class="product-price">السعر: ${productData.price} ${productData.currency}</div>
             </div>
         `;
     }
     
     content += `
             </div>
-            <script src="{{ asset('js/app.js') }}<\/script>
+            <script src="{!! asset('js/app.js') !!}<\/script>
             <script>
                 window.onload = function() {
                     window.print();

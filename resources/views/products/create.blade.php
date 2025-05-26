@@ -134,8 +134,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <select class="form-select @error('category_id') is-invalid @enderror" id="category_id" name="category_id" required>
                             <option value="">اختر التصنيف</option>
                             @foreach($categories as $category)
-                                <option value="{{ $category->id }}" {{ (old('category_id', $selectedCategoryId) == $category->id) ? 'selected' : '' }}>
-                                    {{ $category->full_path }}
+                                <option value="{{ $category->id }}" {{ ((old('category_id', $selectedCategoryId ?? null, $selectedCategoryId) == $category->id)) ? 'selected' : '' }}>
+                                    {{ $category->full_full_path }}
                                 </option>
                             @endforeach
                         </select>

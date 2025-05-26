@@ -146,9 +146,19 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/pos/customers', [PosController::class, 'getCustomers'])->name('pos.customers');
     Route::post('/pos/checkout', [PosController::class, 'checkout'])->name('pos.checkout');
 
+    // مسارات طلبات الشراء
+    Route::prefix('purchase-orders')->name('purchase-orders.')->group(function () {
+        Route::post('/', [ProductController::class, 'storePurchaseOrder'])->name('store');
+        Route::get('/', [ProductController::class, 'indexPurchaseOrders'])->name('index');
+        Route::get('/{order}', [ProductController::class, 'showPurchaseOrder'])->name('show');
+        Route::get('/{order}/edit', [ProductController::class, 'editPurchaseOrder'])->name('edit');
+        Route::put('/{order}', [ProductController::class, 'updatePurchaseOrder'])->name('update');
+        Route::delete('/{order}', [ProductController::class, 'destroyPurchaseOrder'])->name('destroy');
+    });
+
     // مسارات الفواتير
     Route::resource('invoices', InvoiceController::class);
     Route::get('/invoices/{invoice}/print', [InvoiceController::class, 'print'])->name('invoices.print');
-Route::get('/invoices/{invoice}/print-direct', [InvoiceController::class, 'printDirect'])->name('invoices.print-direct');
+    Route::get('/invoices/{invoice}/print-direct', [InvoiceController::class, 'printDirect'])->name('invoices.print-direct');
     Route::post('/invoices/{invoice}/payment', [InvoiceController::class, 'addPayment'])->name('invoices.payment');
 });

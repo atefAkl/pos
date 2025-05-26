@@ -99,4 +99,40 @@ class CategorySearchService
 
         return $searchParams;
     }
+    
+    /**
+     * الحصول على الفئات مع تطبيق الفلاتر (للاستخدام في طلبات AJAX)
+     *
+     * @param Request $request
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getCategoriesWithFilters(Request $request)
+    {
+        $query = Category::query();
+        
+        // تصفية حسب الفئة الأب
+        if ($request->has('parent_id') && !empty($request->parent_id)) {
+            $query->where('parent_id', $request->parent_id);
+        } else {
+            $query->whereNull('parent_id');
+        }
+        
+        // تصفية حسب مصطلح البحث
+        if ($request->filled('search')) {
+            $searchTerm = '%' . $request->search . '%';
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('name', 'LIKE', $searchTerm)
+                  ->orWhere('description', 'LIKE', $searchTerm);
+            });
+        }
+        
+        // تصفية حسب الحالة (نشط/غير نشط)
+        if ($request->has('is_active') && $request->is_active !== '') {
+            $query->where('is_active', $request->is_active);
+        }
+        
+        return $query->withCount('products')
+                    ->orderBy('name')
+                    ->get();
+    }
 }

@@ -13,10 +13,45 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Offer;
 use Picqer\Barcode\BarcodeGeneratorPNG;
 use App\Models\ProductImage;
+use Picqer\Barcode\BarcodeGeneratorHTML;
 
 class Product extends Model implements HasMedia
 {
     use HasFactory, SoftDeletes, InteractsWithMedia;
+    
+    /**
+     * الحصول على صورة الباركود بتنسيق PNG
+     * 
+     * @param int $width عرض الباركود
+     * @param int $height ارتفاع الباركود
+     * @return string صورة الباركود بتنسيق base64
+     */
+    public function getBarcodeImageAttribute()
+    {
+        if (!$this->barcode) {
+            return null;
+        }
+        
+        $generator = new BarcodeGeneratorPNG();
+        $barcode = $generator->getBarcode($this->barcode, $generator::TYPE_CODE_128, 2, 60);
+        
+        return 'data:image/png;base64,' . base64_encode($barcode);
+    }
+    
+    /**
+     * الحصول على كود HTML للباركود
+     * 
+     * @return string كود HTML للباركود
+     */
+    public function getBarcodeHtmlAttribute()
+    {
+        if (!$this->barcode) {
+            return null;
+        }
+        
+        $generator = new BarcodeGeneratorHTML();
+        return $generator->getBarcode($this->barcode, $generator::TYPE_CODE_128, 2, 60);
+    }
 
     protected $fillable = [
         'name',
@@ -286,7 +321,7 @@ class Product extends Model implements HasMedia
             $base64 = 'data:image/png;base64,' . base64_encode($barcodeData);
             return $base64;
         } catch (\Exception $e) {
-            \Log::error('Failed to generate barcode: ' . $e->getMessage());
+            Log::error('Failed to generate barcode: ' . $e->getMessage());
             return null;
         }
     }

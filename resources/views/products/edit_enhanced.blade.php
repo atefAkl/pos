@@ -1,5 +1,15 @@
 @extends('layouts.dashboard')
 
+@push('styles')
+<!-- مكتبة toastr للإشعارات -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+@endpush
+
+@push('scripts')
+<!-- مكتبة toastr للإشعارات -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+@endpush
+
 @section('content')
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">

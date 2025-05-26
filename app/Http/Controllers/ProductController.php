@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
+
 use App\Models\Category;
 use App\Models\Supplier;
 use App\Models\Brand;
@@ -11,6 +11,7 @@ use App\Models\Tax;
 use App\Models\Offer;
 use App\Imports\ProductsImport;
 use App\Exports\ProductsExport;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -142,6 +143,7 @@ class ProductController extends Controller
         ]);
     }
     
+    public function create(Request $request)
     public function create(Request $request)
     {
         // جلب الفئات من المستوى الثالث مع مسارها الكامل
