@@ -19,6 +19,8 @@ class Product extends Model implements HasMedia
 {
     use HasFactory, SoftDeletes, InteractsWithMedia;
     
+    protected $table = 'products';
+    
     /**
      * الحصول على صورة الباركود بتنسيق PNG
      * 

@@ -99,21 +99,21 @@ class ProductController extends Controller
             ->where('code', 'like', 'PRD-%')
             ->orderBy('id', 'desc')
             ->first();
-            
+
         if ($latestCode) {
             $number = (int) str_replace('PRD-', '', $latestCode->code) + 1;
         } else {
             $number = 1000; // Starting number
         }
-        
+
         $newCode = 'PRD-' . str_pad($number, 4, '0', STR_PAD_LEFT);
-        
+
         return response()->json([
             'success' => true,
             'code' => $newCode
         ]);
     }
-    
+
     /**
      * Generate a new SKU
      * 
@@ -124,11 +124,11 @@ class ProductController extends Controller
         // Generate a random 8-character alphanumeric SKU
         $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $sku = 'SKU-';
-        
+
         for ($i = 0; $i < 8; $i++) {
             $sku .= $characters[rand(0, strlen($characters) - 1)];
         }
-        
+
         // Make sure SKU is unique
         while (Product::where('sku', $sku)->exists()) {
             $sku = 'SKU-';
@@ -136,29 +136,28 @@ class ProductController extends Controller
                 $sku .= $characters[rand(0, strlen($characters) - 1)];
             }
         }
-        
+
         return response()->json([
             'success' => true,
             'sku' => $sku
         ]);
     }
-    
-    public function create(Request $request)
+
     public function create(Request $request)
     {
         // جلب الفئات من المستوى الثالث مع مسارها الكامل
         $categories = Category::getThirdLevelWithPath();
-        
+
         // الحصول على معرف الفئة من الطلب إذا كان موجوداً
         $selectedCategoryId = $request->query('category_id');
-        
+
         $suppliers = Supplier::where('is_active', true)->get();
         $brands = Brand::where('is_active', true)->get();
 
         // Generate initial codes
         $latestBarcode = Product::max('barcode');
         $newBarcode = $latestBarcode ? ((int)$latestBarcode + 10) : 1000000000000;
-        
+
         // Generate initial product code
         $latestCode = Product::whereNotNull('code')
             ->where('code', 'like', 'PRD-%')
@@ -233,12 +232,12 @@ class ProductController extends Controller
 
     public function show(Product $product)
     {
-        $product->load(['category', 'offers' => function($query) {
+        $product->load(['category', 'offers' => function ($query) {
             $query->where('is_active', true)
-                  ->where('start_date', '<=', now())
-                  ->where('end_date', '>=', now());
+                ->where('start_date', '<=', now())
+                ->where('end_date', '>=', now());
         }]);
-        
+
         return view('products.show', compact('product'));
     }
 
@@ -249,25 +248,25 @@ class ProductController extends Controller
         $brands = Brand::where('is_active', true)->get();
         $units = Unit::where('is_active', true)->get();
         $taxes = Tax::where('is_active', true)->get();
-        
+
         // تحميل العروض النشطة للمنتج
-        $product->load(['offers' => function($query) {
+        $product->load(['offers' => function ($query) {
             $query->where('is_active', true)
-                  ->where('start_date', '<=', now())
-                  ->where('end_date', '>=', now())
-                  ->orderBy('end_date', 'desc');
+                ->where('start_date', '<=', now())
+                ->where('end_date', '>=', now())
+                ->orderBy('end_date', 'desc');
         }]);
-        
+
         return view('products.edit_enhanced', compact(
-            'product', 
-            'categories', 
-            'suppliers', 
-            'brands', 
-            'units', 
+            'product',
+            'categories',
+            'suppliers',
+            'brands',
+            'units',
             'taxes'
         ));
     }
-    
+
     /**
      * طباعة الباركود للمنتج
      */
@@ -276,11 +275,11 @@ class ProductController extends Controller
         if (empty($product->barcode)) {
             return back()->with('error', 'لا يوجد باركود لهذا المنتج');
         }
-        
+
         $barcodeType = 'C128';
         $barcodeHeight = 50;
         $barcodeWidth = 2;
-        
+
         return view('products.barcodes.print', compact('product', 'barcodeType', 'barcodeHeight', 'barcodeWidth'));
     }
 
@@ -291,15 +290,82 @@ class ProductController extends Controller
     {
         return view('products.offers.create', compact('product'));
     }
-    
+
     /**
      * Update the media (images) of the specified product.
+     */
+    /**
+     * تحديث المعلومات الأساسية للمنتج
+     */
+    public function updateBasic(Request $request, Product $product)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'code' => 'nullable|string|unique:products,code,' . $product->id,
+            'barcode' => 'nullable|string|unique:products,barcode,' . $product->id,
+            'sku' => 'nullable|string|unique:products,sku,' . $product->id,
+            'category_id' => 'required|exists:categories,id',
+            'brand_id' => 'nullable|exists:brands,id',
+            'unit_id' => 'nullable|exists:units,id',
+            'description' => 'nullable|string',
+            'is_service' => 'boolean',
+        ]);
+
+        $product->update($request->all());
+
+        return redirect()->back()->with('success', 'تم تحديث المعلومات الأساسية بنجاح');
+    }
+
+    /**
+     * تحديث معلومات التسعير والمخزون للمنتج
+     */
+    public function updatePricing(Request $request, Product $product)
+    {
+        $request->validate([
+            'cost_price' => 'required|numeric|min:0',
+            'selling_price' => 'required|numeric|min:0',
+            'tax_id' => 'nullable|exists:taxes,id',
+            'quantity' => 'required|numeric|min:0',
+            'reorder_level' => 'nullable|numeric|min:0',
+            'max_stock' => 'nullable|numeric|min:0',
+            'has_expiry' => 'boolean',
+            'expiry_date' => 'nullable|date',
+        ]);
+
+        $product->update($request->all());
+
+        return redirect()->back()->with('success', 'تم تحديث معلومات التسعير والمخزون بنجاح');
+    }
+
+    /**
+     * تحديث التفاصيل الإضافية للمنتج
+     */
+    public function updateDetails(Request $request, Product $product)
+    {
+        $request->validate([
+            'weight' => 'nullable|numeric|min:0',
+            'dimensions' => 'nullable|string',
+            'color' => 'nullable|string',
+            'size' => 'nullable|string',
+            'material' => 'nullable|string',
+            'features' => 'nullable|string',
+            'is_featured' => 'boolean',
+            'is_active' => 'boolean',
+        ]);
+
+        $product->update($request->all());
+
+        return redirect()->back()->with('success', 'تم تحديث التفاصيل الإضافية بنجاح');
+    }
+
+    /**
+     * تحديث وسائط المنتج (الصور)
      */
     public function updateMedia(Request $request, Product $product)
     {
         // تحديث الصورة الرئيسية
         $uploadPath = 'uploads/products/gallery';
-        
+
         if ($request->hasFile('image')) {
             // حذف الصورة القديمة من uploads/products/gallery
             $oldPath = public_path('uploads/' . $product->image);
@@ -339,14 +405,14 @@ class ProductController extends Controller
             'end_date' => 'required|date|after:start_date',
             'is_active' => 'boolean'
         ]);
-        
+
         // إنشاء علاقة مع نموذج Offer إذا كان موجوداً
         if (method_exists($product, 'offers')) {
             $product->offers()->create($validated);
             return redirect()->route('products.show', $product)
                 ->with('success', 'تم إضافة العرض بنجاح');
         }
-        
+
         return back()->with('error', 'لا يمكن إضافة عرض لهذا المنتج');
     }
 
