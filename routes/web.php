@@ -86,7 +86,10 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/products/{product}/update-basic', [ProductController::class, 'updateBasic'])->name('products.update-basic');
     Route::put('/products/{product}/update-pricing', [ProductController::class, 'updatePricing'])->name('products.update-pricing');
     Route::put('/products/{product}/update-details', [ProductController::class, 'updateDetails'])->name('products.update-details');
-    Route::put('/products/{product}/update-media', [ProductController::class, 'updateMedia'])->name('products.update-media');
+    Route::put('/products/{product}/update-main-image', [ProductController::class, 'updateMainImage'])->name('products.update-main-image');
+    Route::put('/products/{product}/update-gallery', [ProductController::class, 'updateGallery'])->name('products.update-gallery');
+    Route::put('/products/{product}/update-barcode', [ProductController::class, 'updateBarcode'])->name('products.update-barcode');
+    Route::put('/products/{product}/update-extra-image', [ProductController::class, 'updateExtraImage'])->name('products.update-extra-image');
 
     // مسار حذف صورة من المعرض
     Route::delete('/product-images/{image}', [ProductImageController::class, 'destroy'])->name('product-images.destroy');

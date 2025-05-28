@@ -361,13 +361,17 @@ class ProductController extends Controller
     /**
      * تحديث وسائط المنتج (الصور)
      */
-    public function updateMedia(Request $request, Product $product)
+    /**
+     * تحديث الصورة الرئيسية فقط
+     */
+    public function updateMainImage(Request $request, Product $product)
     {
-        // تحديث الصورة الرئيسية
+        $request->validate([
+            'image' => 'required|image|max:4096',
+            'image_alt' => 'nullable|string|max:255',
+        ]);
         $uploadPath = 'uploads/products/gallery';
-
         if ($request->hasFile('image')) {
-            // حذف الصورة القديمة من uploads/products/gallery
             $oldPath = public_path('uploads/' . $product->image);
             if ($product->image && file_exists($oldPath)) {
                 unlink($oldPath);
@@ -376,10 +380,21 @@ class ProductController extends Controller
             $request->file('image')->move(public_path($uploadPath), $fileName);
             $product->update([
                 'image' => 'products/gallery/' . $fileName,
+                'image_alt' => $request->input('image_alt'),
             ]);
         }
+        return redirect()->back()->with('success', 'تم تحديث الصورة الرئيسية بنجاح');
+    }
 
-        // تحديث معرض الصور
+    /**
+     * تحديث معرض الصور فقط
+     */
+    public function updateGallery(Request $request, Product $product)
+    {
+        $request->validate([
+            'gallery.*' => 'required|image|max:4096',
+        ]);
+        $uploadPath = 'uploads/products/gallery';
         if ($request->hasFile('gallery')) {
             foreach ($request->file('gallery') as $image) {
                 $fileName = time() . '_' . $image->getClientOriginalName();
@@ -389,9 +404,50 @@ class ProductController extends Controller
                 ]);
             }
         }
+        return redirect()->back()->with('success', 'تم تحديث معرض الصور بنجاح');
+    }
 
-        return redirect()->back()
-            ->with('success', 'تم تحديث الوسائط بنجاح');
+    /**
+     * تحديث صورة الباركود فقط (مثال: يمكن رفع صورة باركود جديدة)
+     */
+    public function updateBarcode(Request $request, Product $product)
+    {
+        // إذا كان هناك صورة باركود مرفوعة
+        $request->validate([
+            'barcode_image' => 'nullable|image|max:4096',
+        ]);
+        if ($request->hasFile('barcode_image')) {
+            $uploadPath = 'uploads/products/barcodes';
+            $fileName = time() . '_' . $request->file('barcode_image')->getClientOriginalName();
+            $request->file('barcode_image')->move(public_path($uploadPath), $fileName);
+            $product->update([
+                'barcode_image' => 'products/barcodes/' . $fileName,
+            ]);
+        }
+        return redirect()->back()->with('success', 'تم تحديث صورة الباركود بنجاح');
+    }
+
+    /**
+     * تحديث صورة إضافية (مثال: صورة خلفية)
+     */
+    public function updateExtraImage(Request $request, Product $product)
+    {
+        $request->validate([
+            'extra_image' => 'required|image|max:4096',
+        ]);
+        $uploadPath = 'uploads/products/extra';
+        if ($request->hasFile('extra_image')) {
+            $oldPath = public_path('uploads/' . $product->extra_image);
+            if ($product->extra_image && file_exists($oldPath)) {
+                unlink($oldPath);
+            }
+            $fileName = time() . '_' . $request->file('extra_image')->getClientOriginalName();
+            $request->file('extra_image')->move(public_path($uploadPath), $fileName);
+            $product->update([
+                'extra_image' => 'products/extra/' . $fileName,
+            ]);
+        }
+        return redirect()->back()->with('success', 'تم تحديث الصورة الإضافية بنجاح');
     }
 
     /**
