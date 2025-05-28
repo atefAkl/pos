@@ -232,7 +232,50 @@ class Product extends Model implements HasMedia
     }
     
     /**
-     * Get all images for the product.
+     * العلاقة مع ملفات المنتج
+     */
+    public function productFiles()
+    {
+        return $this->hasMany(ProductFile::class);
+    }
+    
+    /**
+     * الحصول على الملفات حسب الفئة
+     */
+    public function getFilesByCategory(string $category)
+    {
+        return $this->productFiles()
+            ->where('category', $category)
+            ->where('is_active', true)
+            ->orderBy('order')
+            ->with('file')
+            ->get();
+    }
+    
+    /**
+     * الحصول على صورة المنتج الرئيسية
+     */
+    public function getMainImageFile()
+    {
+        $productFile = $this->productFiles()
+            ->where('category', 'product_image')
+            ->where('is_active', true)
+            ->orderBy('order')
+            ->first();
+        
+        return $productFile ? $productFile->file : null;
+    }
+    
+    /**
+     * الحصول على صور المعرض
+     */
+    public function getGalleryImages()
+    {
+        return $this->getFilesByCategory('gallery_image');
+    }
+    
+    /**
+     * Get all images for the product (legacy support).
      */
     public function images()
     {

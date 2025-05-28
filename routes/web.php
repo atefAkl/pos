@@ -14,6 +14,7 @@ use App\Http\Controllers\ProductImageController;
 use App\Http\Controllers\ProductSettingsController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\TaxController;
+use App\Http\Controllers\FileController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -147,7 +148,28 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/pos', [PosController::class, 'index'])->name('pos.index');
     Route::get('/pos/products', [PosController::class, 'getProducts'])->name('pos.products');
     Route::get('/pos/customers', [PosController::class, 'getCustomers'])->name('pos.customers');
+    
+    // مسارات API للملفات
+    Route::get('/product-files/{product}', [ProductController::class, 'getProductFiles'])->name('product.files');
+    Route::post('/product-files/upload', [ProductController::class, 'uploadFile'])->name('product.files.upload');
+    Route::delete('/product-files/{fileId}', [ProductController::class, 'deleteFile'])->name('product.files.delete');
+    Route::post('/product-files/toggle-active', [ProductController::class, 'toggleFileActive'])->name('product.files.toggle');
+    Route::post('/product-files/migrate/{product}', [ProductController::class, 'migrateLegacyImages'])->name('product.files.migrate');
     Route::post('/pos/checkout', [PosController::class, 'checkout'])->name('pos.checkout');
+    
+    // مسارات إدارة الملفات
+    Route::prefix('files')->name('files.')->group(function () {
+        Route::post('/upload', [FileController::class, 'upload'])->name('upload');
+        Route::delete('/{file}', [FileController::class, 'destroy'])->name('destroy');
+        Route::put('/{file}', [FileController::class, 'update'])->name('update');
+        Route::post('/{file}/replace', [FileController::class, 'replace'])->name('replace');
+        Route::get('/categories', [FileController::class, 'getCategories'])->name('categories');
+    });
+    
+    // مسارات API
+    Route::prefix('api')->group(function () {
+        Route::get('/products/{product}/files', [ProductController::class, 'getProductFiles']);
+    });
 
     // مسارات طلبات الشراء
     Route::prefix('purchase-orders')->name('purchase-orders.')->group(function () {
