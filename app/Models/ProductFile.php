@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ProductFile extends Model
 {
     use HasFactory;
-    
+
     /**
      * The attributes that are mass assignable.
      *
@@ -20,9 +20,9 @@ class ProductFile extends Model
         'file_id',
         'category',
         'is_active',
-        'order'
+        'the_order'
     ];
-    
+
     /**
      * The attributes that should be cast.
      *
@@ -32,7 +32,7 @@ class ProductFile extends Model
         'is_active' => 'boolean',
         'order' => 'integer'
     ];
-    
+
     /**
      * العلاقة مع المنتج
      */
@@ -40,7 +40,7 @@ class ProductFile extends Model
     {
         return $this->belongsTo(Product::class);
     }
-    
+
     /**
      * العلاقة مع الملف
      */
@@ -48,7 +48,7 @@ class ProductFile extends Model
     {
         return $this->belongsTo(File::class);
     }
-    
+
     /**
      * فئات الملفات المتاحة
      */
@@ -64,7 +64,7 @@ class ProductFile extends Model
             'other' => 'أخرى'
         ];
     }
-    
+
     /**
      * الحصول على اسم الفئة بالعربية
      */
@@ -73,7 +73,7 @@ class ProductFile extends Model
         $categories = self::getCategories();
         return $categories[$this->category] ?? $this->category;
     }
-    
+
     /**
      * الحصول على أيقونة الفئة
      */
@@ -88,7 +88,7 @@ class ProductFile extends Model
             'document' => 'fas fa-file-alt',
             'other' => 'fas fa-file'
         ];
-        
+
         return $icons[$this->category] ?? 'fas fa-file';
     }
 }

@@ -459,7 +459,7 @@ class ProductController extends Controller
 
         return redirect()->back()->with('success', 'تم تحديث الصورة الإضافية بنجاح.');
     }
-    
+
     /**
      * رفع ملف جديد للمنتج
      */
@@ -476,96 +476,81 @@ class ProductController extends Controller
                 'related_type' => 'required|string|in:product',
                 'is_active' => 'nullable|boolean',
             ]);
-            
+
             if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'بيانات غير صحيحة',
-                    'errors' => $validator->errors(),
-                ], 422);
+                return back()->withErrors($validator)->withInput();
             }
-            
+
             // التحقق من وجود المنتج
             $product = Product::find($request->related_id);
             if (!$product) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'المنتج غير موجود',
-                ], 404);
+                return back()->withErrors(['related_id' => 'المنتج غير موجود'])->withInput();
             }
-            
+
             // رفع الملف
             $uploadedFile = $request->file('file');
             $originalName = $uploadedFile->getClientOriginalName();
             $extension = $uploadedFile->getClientOriginalExtension();
             $mimeType = $uploadedFile->getMimeType();
             $size = $uploadedFile->getSize();
-            
+            // return $originalName;
             // إنشاء اسم فريد للملف
             $fileName = time() . '_' . Str::slug(pathinfo($originalName, PATHINFO_FILENAME)) . '.' . $extension;
-            
+
             // تحديد مسار التخزين حسب الفئة
             $storagePath = 'products/' . $product->id . '/' . $request->category;
-            
+
             // تخزين الملف
             $filePath = $uploadedFile->storeAs($storagePath, $fileName, 'public');
-            
+
             // إنشاء سجل الملف في قاعدة البيانات
             $file = File::create([
                 'path' => $filePath,
-                'name' => $originalName,
+                'file_name' => $fileName,
+                'original_name' => $originalName,
                 'display_name' => $request->display_name,
                 'mime_type' => $mimeType,
                 'extension' => $extension,
                 'size' => $size,
                 'alt_text' => $request->alt_text ?? $request->display_name,
             ]);
-            
+
             // إنشاء العلاقة مع المنتج
             $isActive = $request->has('is_active') ? (bool)$request->is_active : true;
-            
+
             // تحديد الترتيب التالي لهذه الفئة
             $maxOrder = ProductFile::where('product_id', $product->id)
                 ->where('category', $request->category)
-                ->max('order') ?? 0;
-            
+                ->max('the_order') ?? 0;
+
             $productFile = ProductFile::create([
                 'product_id' => $product->id,
                 'file_id' => $file->id,
                 'category' => $request->category,
                 'is_active' => $isActive,
-                'order' => $maxOrder + 1,
+                'the_order' => $maxOrder + 1,
             ]);
-            
+
             // إضافة معلومات إضافية للرد
             $productFile->load('file');
             $productFile->category_name = $productFile->getCategoryNameAttribute();
             $productFile->category_icon = $productFile->getCategoryIconAttribute();
-            
+
             // إضافة URL للملف
             $file->url = Storage::url($file->path);
-            
+
             // إضافة حجم الملف بصيغة مقروءة
             $file->formatted_size = $this->formatFileSize($file->size);
-            
+
             // إضافة أيقونة الملف حسب نوعه
             $file->icon = $this->getFileIcon($file->mime_type, $file->extension);
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'تم رفع الملف بنجاح',
-                'file' => $file,
-                'product_file' => $productFile,
-            ]);
-            
+
+            return back()->with('success', 'تم رفع الملف بنجاح');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'حدث خطأ أثناء رفع الملف: ' . $e->getMessage(),
-            ], 500);
+            return back()->withErrors(['file' => 'حدث خطأ أثناء رفع الملف: ' . $e->getMessage()])->withInput();
         }
     }
-    
+
     /**
      * تنسيق حجم الملف بصيغة مقروءة
      */
@@ -581,14 +566,14 @@ class ProductController extends Controller
             return $bytes . ' bytes';
         }
     }
-    
+
     /**
      * الحصول على أيقونة الملف حسب نوعه
      */
     private function getFileIcon($mimeType, $extension)
     {
         $extension = strtolower($extension);
-        
+
         // أيقونات حسب نوع MIME
         if (strpos($mimeType, 'image/') === 0) {
             return 'fas fa-file-image';
@@ -609,7 +594,7 @@ class ProductController extends Controller
         } elseif (in_array($mimeType, ['application/zip', 'application/x-rar-compressed', 'application/x-7z-compressed'])) {
             return 'fas fa-file-archive';
         }
-        
+
         // أيقونات حسب الامتداد
         $iconsByExtension = [
             'pdf' => 'fas fa-file-pdf',
@@ -630,10 +615,10 @@ class ProductController extends Controller
             'xml' => 'fas fa-file-code',
             'csv' => 'fas fa-file-csv',
         ];
-        
+
         return $iconsByExtension[$extension] ?? 'fas fa-file';
     }
-    
+
     /**
      * حذف ملف من المنتج
      */
@@ -642,31 +627,30 @@ class ProductController extends Controller
         try {
             // البحث عن الملف
             $file = File::findOrFail($fileId);
-            
+
             // البحث عن علاقة الملف بالمنتج
             $productFile = ProductFile::where('file_id', $fileId)->first();
-            
+
             if (!$productFile) {
                 return response()->json([
                     'success' => false,
                     'message' => 'الملف غير مرتبط بأي منتج',
                 ], 404);
             }
-            
+
             // حذف الملف من التخزين
             if (Storage::disk('public')->exists($file->path)) {
                 Storage::disk('public')->delete($file->path);
             }
-            
+
             // حذف العلاقة والملف من قاعدة البيانات
             $productFile->delete();
             $file->delete();
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'تم حذف الملف بنجاح',
             ]);
-            
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -674,7 +658,7 @@ class ProductController extends Controller
             ], 500);
         }
     }
-    
+
     /**
      * تبديل حالة تنشيط الملف
      */
@@ -685,7 +669,7 @@ class ProductController extends Controller
                 'product_file_id' => 'required|integer',
                 'is_active' => 'required|boolean',
             ]);
-            
+
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
@@ -693,20 +677,19 @@ class ProductController extends Controller
                     'errors' => $validator->errors(),
                 ], 422);
             }
-            
+
             // البحث عن علاقة الملف بالمنتج
             $productFile = ProductFile::findOrFail($request->product_file_id);
-            
+
             // تحديث حالة التنشيط
             $productFile->is_active = (bool)$request->is_active;
             $productFile->save();
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'تم تحديث حالة الملف بنجاح',
                 'product_file' => $productFile,
             ]);
-            
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -714,7 +697,7 @@ class ProductController extends Controller
             ], 500);
         }
     }
-    
+
     /**
      * الحصول على ملفات المنتج عبر API
      */
@@ -727,16 +710,16 @@ class ProductController extends Controller
                 ->orderBy('category')
                 ->orderBy('order')
                 ->get()
-                ->map(function($productFile) {
+                ->map(function ($productFile) {
                     // إضافة معلومات إضافية لكل ملف
                     $productFile->category_name = $productFile->getCategoryNameAttribute();
                     $productFile->category_icon = $productFile->getCategoryIconAttribute();
                     return $productFile;
                 });
-            
+
             // إضافة صور المنتج القديمة للتوافق مع النظام القديم
             $legacyImages = $this->getLegacyProductImages($product);
-            
+
             return response()->json([
                 'success' => true,
                 'files' => $productFiles,
@@ -749,17 +732,17 @@ class ProductController extends Controller
             ], 500);
         }
     }
-    
+
     /**
      * الحصول على صور المنتج القديمة للتوافق مع النظام القديم
      */
     private function getLegacyProductImages(Product $product)
     {
         $legacyImages = [];
-        
+
         // إضافة صور المنتج من النظام القديم
         $productImages = $product->images()->get();
-        
+
         foreach ($productImages as $image) {
             $legacyImages[] = [
                 'id' => $image->id,
@@ -768,7 +751,7 @@ class ProductController extends Controller
                 'type' => 'legacy_image',
             ];
         }
-        
+
         // إضافة الصورة الرئيسية إذا كانت موجودة
         if ($product->image) {
             $legacyImages[] = [
@@ -778,7 +761,7 @@ class ProductController extends Controller
                 'type' => 'main_image',
             ];
         }
-        
+
         // إضافة الصورة الإضافية إذا كانت موجودة
         if ($product->extra_image) {
             $legacyImages[] = [
@@ -788,10 +771,10 @@ class ProductController extends Controller
                 'type' => 'extra_image',
             ];
         }
-        
+
         return $legacyImages;
     }
-    
+
     /**
      * تحويل صور المنتج القديمة إلى النظام الجديد
      */
@@ -799,14 +782,14 @@ class ProductController extends Controller
     {
         try {
             $migratedCount = 0;
-            
+
             // تحويل الصورة الرئيسية
             if ($product->image) {
                 $sourcePath = public_path('uploads/' . $product->image);
                 if (file_exists($sourcePath)) {
                     // إنشاء ملف جديد
                     $file = $this->createFileFromPath($sourcePath, $product->image, 'الصورة الرئيسية', 'products/' . $product->id . '/product_image');
-                    
+
                     // إنشاء العلاقة مع المنتج
                     ProductFile::create([
                         'product_id' => $product->id,
@@ -815,21 +798,21 @@ class ProductController extends Controller
                         'is_active' => true,
                         'order' => 1,
                     ]);
-                    
+
                     $migratedCount++;
                 }
             }
-            
+
             // تحويل صور المعرض
             $productImages = $product->images()->get();
             $order = 1;
-            
+
             foreach ($productImages as $image) {
                 $sourcePath = public_path('uploads/' . $image->image);
                 if (file_exists($sourcePath)) {
                     // إنشاء ملف جديد
                     $file = $this->createFileFromPath($sourcePath, $image->image, 'صورة معرض', 'products/' . $product->id . '/gallery_image');
-                    
+
                     // إنشاء العلاقة مع المنتج
                     ProductFile::create([
                         'product_id' => $product->id,
@@ -838,18 +821,18 @@ class ProductController extends Controller
                         'is_active' => true,
                         'order' => $order++,
                     ]);
-                    
+
                     $migratedCount++;
                 }
             }
-            
+
             // تحويل الصورة الإضافية
             if ($product->extra_image) {
                 $sourcePath = public_path('uploads/' . $product->extra_image);
                 if (file_exists($sourcePath)) {
                     // إنشاء ملف جديد
                     $file = $this->createFileFromPath($sourcePath, $product->extra_image, 'صورة إضافية', 'products/' . $product->id . '/other');
-                    
+
                     // إنشاء العلاقة مع المنتج
                     ProductFile::create([
                         'product_id' => $product->id,
@@ -858,16 +841,15 @@ class ProductController extends Controller
                         'is_active' => true,
                         'order' => 1,
                     ]);
-                    
+
                     $migratedCount++;
                 }
             }
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'تم تحويل ' . $migratedCount . ' ملف بنجاح',
             ]);
-            
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -875,7 +857,7 @@ class ProductController extends Controller
             ], 500);
         }
     }
-    
+
     /**
      * إنشاء ملف جديد من مسار ملف موجود
      */
@@ -885,14 +867,14 @@ class ProductController extends Controller
         $mimeType = mime_content_type($sourcePath);
         $extension = pathinfo($originalName, PATHINFO_EXTENSION);
         $size = filesize($sourcePath);
-        
+
         // إنشاء اسم فريد للملف
         $fileName = time() . '_' . Str::slug(pathinfo($originalName, PATHINFO_FILENAME)) . '.' . $extension;
-        
+
         // نسخ الملف إلى المسار الجديد
         $targetPath = $targetDir . '/' . $fileName;
         Storage::disk('public')->put($targetPath, file_get_contents($sourcePath));
-        
+
         // إنشاء سجل الملف في قاعدة البيانات
         return File::create([
             'path' => $targetPath,
