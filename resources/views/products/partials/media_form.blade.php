@@ -8,7 +8,8 @@
         border: 1px solid #e0e0e0;
         margin-bottom: 15px;
         position: relative;
-        height: 235px; /* Increased height */
+        height: 235px;
+        /* Increased height */
     }
 
     .file-card:hover {
@@ -67,26 +68,34 @@
         padding: 8px 10px !important;
         background-color: white !important;
         border-top: none !important;
-        height: 75px; /* Increased height */
+        height: 75px;
+        /* Increased height */
         display: flex;
         flex-direction: column;
-        justify-content: space-between; /* Changed for better spacing */
+        justify-content: space-between;
+        /* Changed for better spacing */
     }
 
     .card-footer .small {
         font-size: 13px;
         color: #333;
         margin-bottom: 3px;
-        white-space: normal; /* Allow wrapping */
-        word-break: break-all; /* Break long words if necessary */
+        white-space: normal;
+        /* Allow wrapping */
+        word-break: break-all;
+        /* Break long words if necessary */
         overflow: hidden;
         text-overflow: ellipsis;
         display: -webkit-box;
-        -webkit-line-clamp: 2; /* Limit to 2 lines */
-        line-clamp: 2; /* Standard property */
+        -webkit-line-clamp: 2;
+        /* Limit to 2 lines */
+        line-clamp: 2;
+        /* Standard property */
         -webkit-box-orient: vertical;
-        line-height: 1.3em; /* Adjust line height */
-        max-height: 2.6em; /* Max height for 2 lines (2 * 1.3em) */
+        line-height: 1.3em;
+        /* Adjust line height */
+        max-height: 2.6em;
+        /* Max height for 2 lines (2 * 1.3em) */
     }
 
     .file-meta {
@@ -306,9 +315,9 @@
                     </div>
                 </div>
 
-                <!-- عرض الشبكة (صور مصغرة) -->
-                <div id="gridView" class="view-mode">
-                    <div class="row" id="filesGrid">
+                <!-- مستعرض الملفات -->
+                <div id="filesContainer">
+                    <div class="row" id="filesList">
                         @forelse($product->productFiles()->with('file')->orderBy('the_order')->get() as $productFile)
                         <div class="col-md-2 col-sm-3 col-4 mb-3 file-item" id="grid-file-{{ $productFile->id }}" data-category="{{ $productFile->category }}">
                             <div class="card file-card">
@@ -462,14 +471,40 @@
                             </tbody>
                         </table>
                     </div>
+                    @endforelse
                 </div>
             </div>
         </div>
     </div>
+</div>
 
 </div>
 
 @push('scripts')
+<script>
+    // جعل حقل الباركود دائماً في حالة focus
+    window.onload = function() {
+        const barcodeInput = document.getElementById('barcode-search');
+        if (barcodeInput) barcodeInput.focus();
+    };
+    const barcodeInput = document.getElementById('barcode-search');
+    if (barcodeInput) {
+        barcodeInput.addEventListener('blur', function() {
+            setTimeout(() => this.focus(), 100);
+        });
+        // تنفيذ البحث تلقائياً عند الضغط Enter
+        barcodeInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const barcode = this.value.trim();
+                if (barcode) {
+                    // إعادة تحميل الصفحة مع الباركود كـ query string
+                    window.location.href = `?barcode=${encodeURIComponent(barcode)}`;
+                }
+            }
+        });
+    }
+</script>
 <script>
     // معاينة الصورة قبل الرفع
     function previewImage(input, previewId) {

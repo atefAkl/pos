@@ -510,9 +510,10 @@ CREATE TABLE IF NOT EXISTS `products` (
 -- إرجاع أو استيراد بيانات الجدول `products`
 --
 
+
 INSERT INTO `products` (`id`, `name`, `code`, `barcode`, `sku`, `price`, `tax_rate`, `retail_price`, `wholesale_price`, `wholesale_quantity`, `is_service`, `service_duration`, `quantity`, `unit`, `weight`, `dimensions`, `alert_quantity`, `reorder_level`, `category_id`, `unit_id`, `tax_id`, `supplier_id`, `brand_id`, `description`, `image`, `active`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (2, 'زبادى لبنيتا 120 جم بطعم الفراولة', 'PRO-10001', '628707017502', 'MZST120', 1.00, 15.00, 1.40, 1.38, 12, 0, 60, 6000, 'قطعة', 0.120, NULL, 5000, 4000, 14, NULL, NULL, NULL, NULL, NULL, 'uploads/products/gallery/1747951054_coe-manufacturing-png-4.png', 1, '2025-05-22 18:57:34', '2025-05-22 18:57:34', NULL),
-(3, 'الدواجن', 'PRD-111-1001', '628707017512', 'pkn-cool-800-1', 10.00, 15.00, 24.00, 22.00, 6, 0, 60, 100, 'قطعة', 800.000, NULL, 15, 10, 17, NULL, NULL, NULL, NULL, NULL, 'products/gallery/1748298057_OOP Design Patterns.png', 1, '2025-05-25 15:03:40', '2025-05-26 19:20:57', NULL);
+(3, 'بط بكينى 750/1', 'PRD-111-1001', '628707017512', 'pkn-cool-800-1', 10.00, 15.00, 24.00, 22.00, 6, 0, 60, 100, 'قطعة', 800.000, NULL, 15, 10, 17, NULL, NULL, NULL, NULL, NULL, 'products/gallery/1748298057_OOP Design Patterns.png', 1, '2025-05-25 15:03:40', '2025-05-30 18:24:40', NULL);
 
 -- --------------------------------------------------------
 
