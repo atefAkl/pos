@@ -34,7 +34,8 @@ class File extends Model
     protected $appends = [
         'url',
         'icon',
-        'formatted_size'
+        'formatted_size',
+        'icon_color_class'
     ];
 
     /**
@@ -58,35 +59,180 @@ class File extends Model
      */
     public function getIconAttribute(): string
     {
-        $icons = [
-            'image' => 'fas fa-image',
-            'pdf' => 'fas fa-file-pdf',
-            'doc' => 'fas fa-file-word',
-            'xls' => 'fas fa-file-excel',
-            'ppt' => 'fas fa-file-powerpoint',
-            'zip' => 'fas fa-file-archive',
-            'txt' => 'fas fa-file-alt',
-            'audio' => 'fas fa-file-audio',
-            'video' => 'fas fa-file-video',
-            'code' => 'fas fa-file-code',
-            'default' => 'fas fa-file'
+        return $this->getFileIcon($this->mime_type, $this->extension, $this->category);
+    }
+
+    /**
+     * الحصول على فئة اللون لأيقونة الملف
+     */
+    public function getIconColorClassAttribute(): string
+    {
+        $icon = $this->icon; // Access the existing icon attribute
+        $colorClass = 'text-secondary'; // Default color with text- prefix
+
+        if (strpos($icon, 'file-word') !== false) {
+            $colorClass = 'text-primary';
+        } elseif (strpos($icon, 'file-excel') !== false || strpos($icon, 'file-csv') !== false) {
+            $colorClass = 'text-success';
+        } elseif (strpos($icon, 'file-powerpoint') !== false) {
+            $colorClass = 'text-warning';
+        } elseif (strpos($icon, 'file-pdf') !== false) {
+            $colorClass = 'text-danger';
+        } elseif (strpos($icon, 'file-image') !== false) {
+            $colorClass = 'text-info';
+        } elseif (strpos($icon, 'file-video') !== false) {
+            $colorClass = 'text-danger'; 
+        } elseif (strpos($icon, 'file-audio') !== false) {
+            $colorClass = 'text-info';
+        } elseif (strpos($icon, 'file-archive') !== false) {
+            $colorClass = 'text-secondary';
+        } elseif (strpos($icon, 'file-code') !== false) {
+            $colorClass = 'text-dark';
+        } elseif (strpos($icon, 'fa-barcode') !== false) { // Check for barcode icon
+            $colorClass = 'text-warning';
+        }
+
+        return $colorClass;
+    }
+
+    /**
+     * تحديد الأيقونة المناسبة للملف بناءً على نوعه وامتداده وفئته
+     */
+    private function getFileIcon($mimeType, $extension, $category = null): string
+    {
+        // تحويل الامتداد إلى أحرف صغيرة
+        $extension = strtolower($extension);
+        
+        // أيقونات حسب فئة الملف
+        $categoryIcons = [
+            'product_image' => 'fas fa-image',
+            'gallery_image' => 'fas fa-images',
+            'barcode' => 'fas fa-barcode',
+            'document' => 'fas fa-file-alt',
+            'other' => 'fas fa-file',
         ];
-
-        $type = explode('/', $this->mime_type)[0];
-        $ext = $this->extension;
-
-        if ($type === 'image') return $icons['image'];
-        if ($type === 'audio') return $icons['audio'];
-        if ($type === 'video') return $icons['video'];
-        if ($ext === 'pdf') return $icons['pdf'];
-        if (in_array($ext, ['doc', 'docx'])) return $icons['doc'];
-        if (in_array($ext, ['xls', 'xlsx', 'csv'])) return $icons['xls'];
-        if (in_array($ext, ['ppt', 'pptx'])) return $icons['ppt'];
-        if (in_array($ext, ['zip', 'rar', 'tar', 'gz'])) return $icons['zip'];
-        if (in_array($ext, ['txt', 'log', 'md'])) return $icons['txt'];
-        if (in_array($ext, ['html', 'css', 'js', 'php', 'json', 'xml'])) return $icons['code'];
-
-        return $icons['default'];
+        
+        // أيقونات حسب نوع الملف
+        $extensionIcons = [
+            // مستندات نصية
+            'doc' => 'fas fa-file-word',
+            'docx' => 'fas fa-file-word',
+            'odt' => 'fas fa-file-word',
+            'rtf' => 'fas fa-file-alt',
+            'txt' => 'fas fa-file-alt',
+            
+            // جداول بيانات
+            'xls' => 'fas fa-file-excel',
+            'xlsx' => 'fas fa-file-excel',
+            'ods' => 'fas fa-file-excel',
+            'csv' => 'fas fa-file-csv',
+            
+            // عروض تقديمية
+            'ppt' => 'fas fa-file-powerpoint',
+            'pptx' => 'fas fa-file-powerpoint',
+            'odp' => 'fas fa-file-powerpoint',
+            
+            // PDF
+            'pdf' => 'fas fa-file-pdf',
+            
+            // صور
+            'jpg' => 'fas fa-file-image',
+            'jpeg' => 'fas fa-file-image',
+            'png' => 'fas fa-file-image',
+            'gif' => 'fas fa-file-image',
+            'svg' => 'fas fa-file-image',
+            'webp' => 'fas fa-file-image',
+            'bmp' => 'fas fa-file-image',
+            'tiff' => 'fas fa-file-image',
+            
+            // فيديو
+            'mp4' => 'fas fa-file-video',
+            'avi' => 'fas fa-file-video',
+            'mov' => 'fas fa-file-video',
+            'wmv' => 'fas fa-file-video',
+            'mkv' => 'fas fa-file-video',
+            'webm' => 'fas fa-file-video',
+            
+            // صوت
+            'mp3' => 'fas fa-file-audio',
+            'wav' => 'fas fa-file-audio',
+            'ogg' => 'fas fa-file-audio',
+            'flac' => 'fas fa-file-audio',
+            
+            // أرشيف
+            'zip' => 'fas fa-file-archive',
+            'rar' => 'fas fa-file-archive',
+            '7z' => 'fas fa-file-archive',
+            'tar' => 'fas fa-file-archive',
+            'gz' => 'fas fa-file-archive',
+            
+            // كود
+            'html' => 'fas fa-file-code',
+            'css' => 'fas fa-file-code',
+            'js' => 'fas fa-file-code',
+            'php' => 'fas fa-file-code',
+            'py' => 'fas fa-file-code',
+            'java' => 'fas fa-file-code',
+            'c' => 'fas fa-file-code',
+            'cpp' => 'fas fa-file-code',
+            'json' => 'fas fa-file-code',
+            'xml' => 'fas fa-file-code',
+            
+            // قواعد بيانات
+            'sql' => 'fas fa-database',
+            'db' => 'fas fa-database',
+            'sqlite' => 'fas fa-database',
+            
+            // تنفيذية
+            'exe' => 'fas fa-cogs',
+            'msi' => 'fas fa-cogs',
+            'bat' => 'fas fa-terminal',
+            'sh' => 'fas fa-terminal',
+            
+            // أخرى
+            'ttf' => 'fas fa-font',
+            'otf' => 'fas fa-font',
+            'woff' => 'fas fa-font',
+            'woff2' => 'fas fa-font',
+        ];
+        
+        // 1. أولاً: تحقق من الامتداد
+        if (isset($extensionIcons[$extension])) {
+            return $extensionIcons[$extension];
+        }
+        
+        // 2. ثانياً: تحقق من نوع MIME
+        if ($mimeType) {
+            $mime = strtolower($mimeType);
+            
+            if (strpos($mime, 'image/') === 0) {
+                return 'fas fa-file-image';
+            } elseif (strpos($mime, 'video/') === 0) {
+                return 'fas fa-file-video';
+            } elseif (strpos($mime, 'audio/') === 0) {
+                return 'fas fa-file-audio';
+            } elseif (strpos($mime, 'text/') === 0) {
+                return 'fas fa-file-alt';
+            } elseif (strpos($mime, 'application/pdf') === 0) {
+                return 'fas fa-file-pdf';
+            } elseif (strpos($mime, 'application/msword') === 0 || strpos($mime, 'application/vnd.openxmlformats-officedocument.wordprocessingml') === 0) {
+                return 'fas fa-file-word';
+            } elseif (strpos($mime, 'application/vnd.ms-excel') === 0 || strpos($mime, 'application/vnd.openxmlformats-officedocument.spreadsheetml') === 0) {
+                return 'fas fa-file-excel';
+            } elseif (strpos($mime, 'application/vnd.ms-powerpoint') === 0 || strpos($mime, 'application/vnd.openxmlformats-officedocument.presentationml') === 0) {
+                return 'fas fa-file-powerpoint';
+            } elseif (strpos($mime, 'application/zip') === 0 || strpos($mime, 'application/x-rar') === 0 || strpos($mime, 'application/x-7z-compressed') === 0) {
+                return 'fas fa-file-archive';
+            }
+        }
+        
+        // 3. ثالثاً: تحقق من الفئة
+        if ($category && isset($categoryIcons[$category])) {
+            return $categoryIcons[$category];
+        }
+        
+        // 4. أيقونة افتراضية
+        return 'fas fa-file';
     }
 
     /**

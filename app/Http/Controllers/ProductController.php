@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use PDF;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ProductController extends Controller
 {
@@ -622,35 +623,50 @@ class ProductController extends Controller
     /**
      * حذف ملف من المنتج
      */
-    public function deleteFile(Request $request, $fileId)
+    public function deleteFile(Request $request, $productFileId) // Changed parameter name to reflect its nature
     {
         try {
-            // البحث عن الملف
-            $file = File::findOrFail($fileId);
+            // Find the ProductFile record by its own ID
+            $productFile = ProductFile::findOrFail($productFileId);
 
-            // البحث عن علاقة الملف بالمنتج
-            $productFile = ProductFile::where('file_id', $fileId)->first();
+            // Get the ID of the actual File record before deleting the ProductFile link
+            $fileIdToDelete = $productFile->file_id;
 
-            if (!$productFile) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'الملف غير مرتبط بأي منتج',
-                ], 404);
-            }
-
-            // حذف الملف من التخزين
-            if (Storage::disk('public')->exists($file->path)) {
-                Storage::disk('public')->delete($file->path);
-            }
-
-            // حذف العلاقة والملف من قاعدة البيانات
+            // Delete the link between the product and the file
             $productFile->delete();
-            $file->delete();
+
+            // Check if the actual File record is now orphaned (no other ProductFile links to it)
+            $isOrphaned = !ProductFile::where('file_id', $fileIdToDelete)->exists();
+
+            $message = '';
+
+            if ($isOrphaned) {
+                $file = File::find($fileIdToDelete);
+                if ($file) {
+                    // Delete the physical file from storage
+                    if (Storage::disk('public')->exists($file->path)) {
+                        Storage::disk('public')->delete($file->path);
+                    }
+                    // Delete the File record from the database
+                    $file->delete();
+                    $message = 'تم حذف الملف وارتباطه بالمنتج بنجاح (الملف كان يتيمًا وتم حذفه نهائيًا).';
+                } else {
+                    // This case is unlikely if ProductFile existed, but good to handle
+                    $message = 'تم حذف ارتباط الملف بالمنتج (سجل الملف الأصلي لم يكن موجودًا).';
+                }
+            } else {
+                $message = 'تم حذف ارتباط الملف بهذا المنتج (الملف لا يزال مستخدمًا بواسطة منتجات أخرى أو كيانات أخرى).';
+            }
 
             return response()->json([
                 'success' => true,
-                'message' => 'تم حذف الملف بنجاح',
+                'message' => $message,
             ]);
+        } catch (ModelNotFoundException $e) { // Specifically catch if ProductFile itself is not found
+            return response()->json([
+                'success' => false,
+                'message' => 'لم يتم العثور على ارتباط الملف بالمنتج المحدد.',
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

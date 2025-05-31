@@ -1,33 +1,46 @@
 <style>
-    /* تنسيقات عرض الملفات */
+    /* تنسيقات عرض الملفات - تصميم Google Drive */
     .file-card {
-        transition: all 0.3s ease;
-        border-radius: 8px;
+        transition: all 0.2s ease;
+        border-radius: 0;
         overflow: hidden;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        box-shadow: none;
+        border: 1px solid #e0e0e0;
+        margin-bottom: 15px;
+        position: relative;
+        height: 235px; /* Increased height */
     }
-    
+
     .file-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        border-color: #ccc;
     }
-    
+
+    .file-card.selected {
+        background-color: #e8f0fe;
+        border-color: #c6dafc;
+    }
+
     .file-preview {
-        height: 150px;
+        height: 160px;
         display: flex;
         align-items: center;
         justify-content: center;
         overflow: hidden;
         position: relative;
         background-color: #f8f9fa;
+        border-bottom: 1px solid #e0e0e0;
+        padding: 0;
     }
-    
+
     .file-preview img {
         max-height: 100%;
         max-width: 100%;
-        object-fit: contain;
+        object-fit: cover;
+        width: 100%;
+        height: 100%;
     }
-    
+
     .file-icon-container {
         height: 100%;
         width: 100%;
@@ -36,30 +49,116 @@
         justify-content: center;
         background-color: #f8f9fa;
     }
-    
+
     .file-extension {
         position: absolute;
         bottom: 0;
         left: 0;
-        right: 0;
-        background-color: rgba(0,0,0,0.6);
+        width: 35px;
+        background-color: rgba(0, 0, 0, 0.6);
         color: white;
         text-align: center;
         padding: 2px 5px;
-        font-size: 12px;
+        font-size: 10px;
         font-weight: bold;
     }
-    
+
+    .card-footer {
+        padding: 8px 10px !important;
+        background-color: white !important;
+        border-top: none !important;
+        height: 75px; /* Increased height */
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between; /* Changed for better spacing */
+    }
+
     .card-footer .small {
-        white-space: nowrap;
+        font-size: 13px;
+        color: #333;
+        margin-bottom: 3px;
+        white-space: normal; /* Allow wrapping */
+        word-break: break-all; /* Break long words if necessary */
         overflow: hidden;
         text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2; /* Limit to 2 lines */
+        line-clamp: 2; /* Standard property */
+        -webkit-box-orient: vertical;
+        line-height: 1.3em; /* Adjust line height */
+        max-height: 2.6em; /* Max height for 2 lines (2 * 1.3em) */
     }
-    
+
+    .file-meta {
+        font-size: 11px;
+        color: #777;
+    }
+
+    .file-actions {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        display: none;
+    }
+
+    .file-card:hover .file-actions {
+        display: block;
+    }
+
+    .file-actions .btn {
+        padding: 2px 5px;
+        font-size: 12px;
+        margin-left: 2px;
+        background-color: rgba(255, 255, 255, 0.9);
+        border-color: rgba(0, 0, 0, 0.1);
+    }
+
     /* تنسيقات أزرار التبديل بين طرق العرض */
-    #gridViewBtn.active, #listViewBtn.active {
+    #gridViewBtn.active,
+    #listViewBtn.active {
         background-color: #0d6efd;
         color: white;
+    }
+
+    /* تنسيقات أيقونات الملفات */
+    .file-type-icon {
+        font-size: 40px;
+    }
+
+    .file-type-doc {
+        color: #4285F4;
+    }
+
+    .file-type-sheet {
+        color: #0F9D58;
+    }
+
+    .file-type-slide {
+        color: #F4B400;
+    }
+
+    .file-type-pdf {
+        color: #DB4437;
+    }
+
+    .file-type-image {
+        color: #8e44ad;
+    }
+
+    .file-type-video {
+        color: #e74c3c;
+    }
+
+    .file-type-audio {
+        color: #3498db;
+    }
+
+    .file-type-archive {
+        color: #7f8c8d;
+    }
+
+    .file-type-code {
+        color: #2c3e50;
     }
 </style>
 
@@ -184,7 +283,7 @@
     <div class="col-md-12 mb-4">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0"><i class="fas fa-folder-open"></i> ملفات المنتج</h6>
+                <h6 class="mb-0"><i class="fas fa-images"></i> مستعرض ملفات المنتج: <span class="text-primary">{{ $product->name ?? 'المنتج الحالي' }}</span></h6>
                 <!-- أزرار تبديل طريقة العرض -->
                 <div class="btn-group">
                     <button type="button" class="btn btn-sm btn-outline-secondary active" id="gridViewBtn" title="عرض كصور مصغرة">
@@ -199,11 +298,11 @@
                 <!-- أزرار التصفية -->
                 <div class="d-flex justify-content-between mb-3">
                     <div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-outline-primary active" data-filter="all">الكل</button>
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-filter="product_image">صور المنتج</button>
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-filter="gallery_image">معرض الصور</button>
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-filter="barcode">باركود</button>
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-filter="document">مستندات</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary active" data-filter="all">{{ __('file_categories.all') }}</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-filter="product_image">{{ __('file_categories.product_image') }}</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-filter="gallery_image">{{ __('file_categories.gallery_image') }}</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-filter="barcode">{{ __('file_categories.barcode') }}</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-filter="document">{{ __('file_categories.document') }}</button>
                     </div>
                 </div>
 
@@ -211,36 +310,83 @@
                 <div id="gridView" class="view-mode">
                     <div class="row" id="filesGrid">
                         @forelse($product->productFiles()->with('file')->orderBy('the_order')->get() as $productFile)
-                            <div class="col-md-3 col-sm-4 col-6 mb-3 file-item" id="grid-file-{{ $productFile->id }}" data-category="{{ $productFile->category }}">
-                            <div class="card h-100 file-card">
-                                <div class="card-header p-2 d-flex justify-content-between align-items-center">
-                                    <span class="badge bg-{{ $productFile->category == 'product_image' ? 'primary' : ($productFile->category == 'gallery_image' ? 'info' : ($productFile->category == 'barcode' ? 'warning' : ($productFile->category == 'document' ? 'success' : 'secondary'))) }}">{{ $productFile->category ? __('app.file_categories.'.$productFile->category) : 'غير مصنف' }}</span>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input file-active-toggle" type="checkbox"
-                                            data-file-id="{{ $productFile->file_id }}"
-                                            data-product-file-id="{{ $productFile->id }}"
-                                            {{ $productFile->is_active ? 'checked' : '' }}>
-                                    </div>
-                                </div>
-                                <div class="card-img-top file-preview">
-                                    @if($productFile->file && $productFile->file->isImage())
-                                        <img src="{{ asset('storage/' . $productFile->file->path) }}" class="img-fluid" alt="{{ $productFile->file->alt_text ?? $productFile->file->display_name }}">
-                                    @else
-                                        <div class="file-icon-container d-flex align-items-center justify-content-center">
-                                            <i class="{{ $productFile->file->icon ?? 'fas fa-file' }} fa-3x text-{{ $productFile->category == 'product_image' ? 'primary' : ($productFile->category == 'gallery_image' ? 'info' : ($productFile->category == 'barcode' ? 'warning' : ($productFile->category == 'document' ? 'success' : 'secondary'))) }}"></i>
-                                        </div>
-                                        <div class="file-extension">{{ strtoupper($productFile->file->extension) }}</div>
-                                    @endif
-                                </div>
-                                <div class="card-footer p-2">
-                                    <div class="small mb-2 text-truncate">{{ $productFile->file->display_name ?? $productFile->file->original_name }}</div>
-                                    <div class="btn-group btn-group-sm w-100">
-                                        <a href="{{ asset('storage/' . $productFile->file->path) }}" class="btn btn-sm btn-outline-info" target="_blank">
+                        <div class="col-md-2 col-sm-3 col-4 mb-3 file-item" id="grid-file-{{ $productFile->id }}" data-category="{{ $productFile->category }}">
+                            <div class="card file-card">
+                                <!-- أزرار الإجراءات التي تظهر عند تمرير المؤشر -->
+                                <div class="file-actions p-3">
+                                    <div class="btn-group">
+                                        <a href="{{ asset('storage/' . $productFile->file->path) }}" class="btn btn-sm btn-light" target="_blank" title="عرض">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteFile({{ $productFile->id }})">
+                                        <button type="button" data-id="{{ $productFile->id }}" class="btn btn-sm btn-light" onclick="deleteFile(this.getAttribute('data-id'))" title="حذف">
                                             <i class="fas fa-trash"></i>
                                         </button>
+                                        <div class="form-check form-switch d-inline-block ms-1">
+                                            <input class="form-check-input file-active-toggle" type="checkbox"
+                                                data-file-id="{{ $productFile->file_id }}"
+                                                data-product-file-id="{{ $productFile->id }}"
+                                                {{ $productFile->is_active ? 'checked' : '' }}>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- معاينة الملف -->
+                                <div class="card-img-top file-preview">
+                                    @if($productFile->file) {{-- Check if file record exists --}}
+                                    @if($productFile->file->isImage())
+                                    <img src="{{ $productFile->file->url }}" alt="{{ $productFile->file->alt_text ?? $productFile->file->display_name }}">
+                                    @else
+                                    <div class="file-icon-container d-flex align-items-center justify-content-center">
+                                        <i class="{{ $productFile->file->icon }} file-type-icon {{ $productFile->file->icon_color_class }}"></i>
+                                    </div>
+                                    <div class="file-extension">{{ strtoupper($productFile->file->extension) }}</div>
+                                    @endif
+                                    @else
+                                    {{-- Fallback for MISSING FILE RECORD --}}
+                                    <div class="file-icon-container d-flex align-items-center justify-content-center flex-column text-center p-2">
+                                        <i class="fas fa-unlink file-type-icon text-danger" style="font-size: 2rem;"></i>
+                                        <small class="text-danger mt-1">File record missing</small>
+                                        @if($productFile->display_name)
+                                        <small class="text-muted mt-1" style="font-size: 0.75rem; word-break: break-all;">Expected: {{ Str::limit($productFile->display_name, 30) }}</small>
+                                        @endif
+                                    </div>
+                                    @endif
+                                </div>
+
+                                <!-- معلومات الملف -->
+                                <div class="card-footer py-2">
+                                    <div class="small">{{ $productFile->file->display_name ?? $productFile->file->original_name ?? $productFile->display_name ?? 'N/A' }}</div>
+                                    <div class="file-meta d-flex justify-content-between">
+                                        <span>{{ $productFile->file->formatted_size ?? '-' }}</span>
+                                        <span class="badge bg-{{ $productFile->category == 'product_image' ? 'primary' : ($productFile->category == 'gallery_image' ? 'info' : ($productFile->category == 'barcode' ? 'warning' : ($productFile->category == 'document' ? 'success' : 'secondary'))) }} badge-sm">{{ $productFile->category ? __('file_categories.'.$productFile->category) : 'غير مصنف' }}</span>
+                                    </div>
+                                    <div class="file-actions-footer mt-2 pt-2 border-top">
+                                        <div class="btn-group btn-group-sm w-100" role="group" aria-label="File actions">
+                                            <a href="{{ $productFile->file ? $productFile->file->url : '#' }}"
+                                                class="btn btn-outline-secondary {{ $productFile->file ? '' : 'disabled' }}"
+                                                target="_blank"
+                                                title="عرض الملف">
+                                                <i class="fas fa-eye"></i> {{-- عرض --}}
+                                            </a>
+                                            <button type="button"
+                                                class="btn btn-outline-secondary"
+                                                data-file-id="{{ $productFile->file_id ?? 0 }}"
+                                                data-display-name="{{ $productFile->file->display_name ?? '' }}"
+                                                data-alt-text="{{ $productFile->file->alt_text ?? '' }}"
+                                                onclick="handleEditFileClick(this)"
+                                                title="تعديل بيانات الملف"
+                                                {{ $productFile->file ? '' : 'disabled' }}>
+                                                <i class="fas fa-edit"></i> {{-- تعديل --}}
+                                            </button>
+                                            <button type="button"
+                                                class="btn btn-outline-danger"
+                                                data-file-id="{{ $productFile->file_id ?? 0 }}"
+                                                onclick="deleteFile(this.getAttribute('data-file-id'))"
+                                                title="حذف ارتباط الملف بالمنتج"
+                                                {{ $productFile->file ? '' : 'disabled' }}>
+                                                <i class="fas fa-trash"></i> {{-- حذف --}}
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -248,7 +394,7 @@
                         @empty
                         <div class="col-12 text-center py-5" id="noFilesGrid">
                             <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
-                            <p>لا توجد ملفات مرتبطة بالمنتج حالياً</p>
+                            <p>لا توجد ملفات مرتبطة بالمنتج تم رفعها حتى الآن</p>
                         </div>
                         @endforelse
                     </div>
@@ -283,7 +429,7 @@
                                         <small class="text-muted">{{ $productFile->file->original_name }}</small>
                                     </td>
                                     <td>
-                                        <span class="badge bg-secondary">{{ $productFile->category ? __('app.file_categories.'.$productFile->category) : 'غير مصنف' }}</span>
+                                        <span class="badge bg-secondary">{{ $productFile->category ? __('file_categories.'.$productFile->category) : 'غير مصنف' }}</span>
                                     </td>
                                     <td>{{ $productFile->file->formatted_size ?? '-' }}</td>
                                     <td>
@@ -299,7 +445,7 @@
                                             <a href="{{ asset('storage/' . $productFile->file->path) }}" class="btn btn-sm btn-outline-info" target="_blank">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteFile({{ $productFile->id }})">
+                                            <button type="button" data-id="{{ $productFile->id }}" class="btn btn-sm btn-outline-danger" onclick="deleteFile(this.getAttribute('data-id'))">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </div>
@@ -348,30 +494,30 @@
     function deleteFile(productFileId) {
         if (confirm('هل أنت متأكد من حذف هذا الملف؟')) {
             fetch(`/product-files/${productFileId}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // إزالة الملف من العرض
-                    document.getElementById(`grid-file-${productFileId}`)?.remove();
-                    document.getElementById(`list-file-${productFileId}`)?.remove();
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // إزالة الملف من العرض
+                        document.getElementById(`grid-file-${productFileId}`)?.remove();
+                        document.getElementById(`list-file-${productFileId}`)?.remove();
 
-                    // إظهار رسالة نجاح
-                    alert('تم حذف الملف بنجاح');
-                } else {
-                    alert(data.message || 'حدث خطأ أثناء حذف الملف');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('حدث خطأ أثناء حذف الملف');
-            });
+                        // إظهار رسالة نجاح
+                        alert('تم حذف الملف بنجاح');
+                    } else {
+                        alert(data.message || 'حدث خطأ أثناء حذف الملف');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('حدث خطأ أثناء حذف الملف');
+                });
         }
     }
 
@@ -383,32 +529,32 @@
                 const isActive = this.checked;
 
                 fetch('/product-files/toggle-active', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        product_file_id: productFileId,
-                        is_active: isActive
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            product_file_id: productFileId,
+                            is_active: isActive
+                        })
                     })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (!data.success) {
-                        alert(data.message || 'حدث خطأ أثناء تحديث حالة الملف');
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) {
+                            alert(data.message || 'حدث خطأ أثناء تحديث حالة الملف');
+                            // إعادة الحالة إلى ما كانت عليه
+                            this.checked = !isActive;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('حدث خطأ أثناء تحديث حالة الملف');
                         // إعادة الحالة إلى ما كانت عليه
                         this.checked = !isActive;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('حدث خطأ أثناء تحديث حالة الملف');
-                    // إعادة الحالة إلى ما كانت عليه
-                    this.checked = !isActive;
-                });
+                    });
             });
         });
 
