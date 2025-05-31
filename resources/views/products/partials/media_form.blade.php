@@ -471,7 +471,7 @@
                             </tbody>
                         </table>
                     </div>
-                    @endforelse
+
                 </div>
             </div>
         </div>

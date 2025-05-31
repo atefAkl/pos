@@ -30,23 +30,23 @@
             <form action="{{ route('products.index') }}" method="GET" class="mb-4">
                 <div class="row g-2">
                     <div class="col-md-2">
-                        <input type="text" name="search" class="form-control" 
+                        <input type="text" name="search" class="form-control"
                             placeholder="بحث بالاسم أو الكود..." value="{{ request('search') }}">
                     </div>
                     <div class="col-md-2">
                         <select name="category" class="form-select">
                             <option value="">كل الفئات</option>
                             @foreach($categories as $category)
-                                <option value="{{ $category->id }}" 
-                                    {{ request('category') == $category->id ? 'selected' : '' }}>
-                                    {{ $category->name }}
-                                </option>
+                            <option value="{{ $category->id }}"
+                                {{ request('category') == $category->id ? 'selected' : '' }}>
+                                {{ $category->name }}
+                            </option>
                             @endforeach
                         </select>
                     </div>
                     <div class="col-md-2">
                         <select name="type" class="form-select">
-                            <option value="">الكل</option>
+                            <option value="">منتج أو خدمة</option>
                             <option value="product" {{ request('type') === 'product' ? 'selected' : '' }}>منتجات</option>
                             <option value="service" {{ request('type') === 'service' ? 'selected' : '' }}>خدمات</option>
                         </select>
@@ -60,7 +60,7 @@
                     </div>
                     <div class="col-md-2">
                         <select name="stock" class="form-select">
-                            <option value="">حالة المخزون</option>
+                            <option value="">كل حالات المخزون</option>
                             <option value="low" {{ request('stock') === 'low' ? 'selected' : '' }}>منخفض</option>
                             <option value="out" {{ request('stock') === 'out' ? 'selected' : '' }}>منتهي</option>
                         </select>
@@ -83,10 +83,8 @@
                     <thead class="table-light">
                         <tr>
                             <th>#</th>
-                            <th>الصورة</th>
+
                             <th>الاسم</th>
-                            <th>النوع</th>
-                            <th>الفئة</th>
                             <th>الكود / الباركود</th>
                             <th>السعر</th>
                             <th>المخزون</th>
@@ -99,68 +97,51 @@
                         <tr class="{{ $product->quantity <= $product->alert_quantity ? 'table-warning' : '' }}">
                             <td>{{ $loop->iteration }}</td>
                             <td>
-                                @if($product->image)
-                                    <img src="{{ asset($product->image) }}" alt="{{ $product->name }}" 
-                                        class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;">
-                                @else
-                                    <div class="bg-light d-flex align-items-center justify-content-center" 
-                                        style="width: 50px; height: 50px;">
-                                        <i class="fas fa-{{ $product->is_service ? 'hand-holding-medical' : 'box' }} text-muted"></i>
-                                    </div>
-                                @endif
-                            </td>
-                            <td>
                                 <div class="fw-bold">{{ $product->name }}</div>
                                 @if($product->sku)
-                                    <small class="text-muted">SKU: {{ $product->sku }}</small>
+                                <small class="text-muted">SKU: {{ $product->sku }}</small>
                                 @endif
-                            </td>
-                            <td>
-                                <span class="badge bg-{{ $product->is_service ? 'info' : 'primary' }}">
-                                    {{ $product->is_service ? 'خدمة' : 'منتج' }}
+                                <span class="fas fa-{{ $product->is_service ? 'tools' : 'box' }} text-{{ $product->is_service ? 'info' : 'primary' }}">
                                 </span>
-                                @if($product->is_service && $product->service_duration)
-                                    <div class="text-muted small">{{ $product->service_duration }} دقيقة</div>
-                                @endif
+                                <span class="progress-bar bg-primary text-light" role="progressbar">{{ $product->category->name }}</span>
                             </td>
-                            <td>{{ $product->category->name }}</td>
                             <td>
                                 @if($product->code)
-                                    <div><strong>الكود:</strong> {{ $product->code }}</div>
+                                <div><strong>الكود:</strong> {{ $product->code }}</div>
                                 @endif
                                 @if($product->barcode)
-                                    <div><strong>الباركود:</strong> {{ $product->barcode }}</div>
+                                <div><strong>الباركود:</strong> {{ $product->barcode }}</div>
                                 @endif
                             </td>
                             <td>
                                 <div><strong>التكلفة:</strong> {{ number_format($product->price, 2) }} ر.س</div>
                                 <div><strong>البيع:</strong> {{ number_format($product->retail_price, 2) }} ر.س</div>
                                 @if($product->wholesale_price && $product->wholesale_quantity > 1)
-                                    <div class="text-success">
-                                        <small>الجملة: {{ number_format($product->wholesale_price, 2) }} ر.س ({{ $product->wholesale_quantity }}+)</small>
-                                    </div>
+                                <div class="text-success">
+                                    <small>الجملة: {{ number_format($product->wholesale_price, 2) }} ر.س ({{ $product->wholesale_quantity }}+)</small>
+                                </div>
                                 @endif
                             </td>
                             <td>
                                 @if(!$product->is_service)
-                                    <div class="progress" style="height: 20px;">
-                                        @php
-                                            $percentage = $product->quantity > 0 ? min(100, ($product->quantity / ($product->reorder_level > 0 ? $product->reorder_level * 2 : 10)) * 100) : 0;
-                                            $color = $product->quantity == 0 ? 'danger' : ($product->quantity <= $product->alert_quantity ? 'warning' : 'success');
+                                <div class="progress" style="height: 20px;">
+                                    @php
+                                    $percentage = $product->quantity > 0 ? min(100, ($product->quantity / ($product->reorder_level > 0 ? $product->reorder_level * 2 : 10)) * 100) : 0;
+                                    $color = $product->quantity == 0 ? 'danger' : ($product->quantity <= $product->alert_quantity ? 'warning' : 'success');
                                         @endphp
-                                        <div class="progress-bar bg-{{ $color }}" role="progressbar" 
-                                            style="width: {{ $percentage }}%" 
-                                            aria-valuenow="{{ $percentage }}" 
-                                            aria-valuemin="0" 
+                                        <div class="progress-bar bg-{{ $color }}" role="progressbar"
+                                            style="width: {{ $percentage }}%"
+                                            aria-valuenow="{{ $percentage }}"
+                                            aria-valuemin="0"
                                             aria-valuemax="100">
                                             {{ $product->quantity }} {{ $product->unit ?: 'قطعة' }}
                                         </div>
-                                    </div>
-                                    @if($product->alert_quantity > 0)
-                                        <small class="text-muted">حد التنبيه: {{ $product->alert_quantity }}</small>
-                                    @endif
+                                </div>
+                                @if($product->alert_quantity > 0)
+                                <small class="text-muted">حد التنبيه: {{ $product->alert_quantity }}</small>
+                                @endif
                                 @else
-                                    <span class="text-muted">غير قابل للتطبيق</span>
+                                <span class="text-muted">غير قابل للتطبيق</span>
                                 @endif
                             </td>
                             <td>
@@ -170,8 +151,8 @@
                                         @method('PATCH')
                                         <input type="hidden" name="active" value="{{ $product->active ? 0 : 1 }}">
                                         <button type="submit" class="btn btn-link p-0 border-0 bg-transparent">
-                                            <input class="form-check-input" type="checkbox" 
-                                                {{ $product->active ? 'checked' : '' }} 
+                                            <input class="form-check-input" type="checkbox"
+                                                {{ $product->active ? 'checked' : '' }}
                                                 onchange="this.form.submit()"
                                                 style="cursor: pointer;">
                                         </button>
@@ -180,16 +161,16 @@
                             </td>
                             <td>
                                 <div class="btn-group btn-group-sm" role="group">
-                                    <form action="{{ route('products.destroy', $product) }}" method="POST" class="d-inline" 
-                                    onsubmit="return confirm('هل أنت متأكد من حذف {{ $product->is_service ? 'هذه الخدمة' : 'هذا المنتج' }}؟')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <a href="{{ route('products.show', $product) }}" class="btn btn-info" title="عرض">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="{{ route('products.edit', $product) }}" class="btn btn-primary" title="تعديل">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
+                                    <form action="{{ route('products.destroy', $product) }}" method="POST" class="d-inline"
+                                        onsubmit="return confirm('هل أنت متأكد من حذف {{ $product->is_service ? 'هذه الخدمة' : 'هذا المنتج' }}؟')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <a href="{{ route('products.show', $product) }}" class="btn btn-info" title="عرض">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ route('products.edit', $product) }}" class="btn btn-primary" title="تعديل">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
                                         <button type="submit" class="btn btn-danger" title="حذف">
                                             <i class="fas fa-trash"></i>
                                         </button>
@@ -227,24 +208,30 @@
 @push('styles')
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
 <style>
-    .table th, .table td {
+    .table th,
+    .table td {
         vertical-align: middle;
         text-align: center;
     }
+
     .table th {
         background-color: #f8f9fc;
         font-weight: 600;
     }
+
     .progress {
         min-width: 100px;
     }
+
     .img-thumbnail {
         padding: 0.15rem;
         background-color: #fff;
         border: 1px solid #dee2e6;
         border-radius: 0.25rem;
     }
-    .btn-group-sm > .btn, .btn-sm {
+
+    .btn-group-sm>.btn,
+    .btn-sm {
         padding: 0.25rem 0.5rem;
         font-size: 0.75rem;
     }
@@ -263,15 +250,19 @@
                 "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/ar.json"
             },
             "responsive": true,
-            "order": [[0, 'asc']],
+            "order": [
+                [0, 'asc']
+            ],
             "pageLength": 25,
             "dom": `
                 <'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>
                 <'row'<'col-sm-12'tr>>
                 <'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>
             `,
-            "columnDefs": [
-                { "orderable": false, "targets": [1, 9] } // Disable sorting on image and actions columns
+            "columnDefs": [{
+                    "orderable": false,
+                    "targets": [1, 9]
+                } // Disable sorting on image and actions columns
             ]
         });
 
@@ -280,7 +271,7 @@
             e.preventDefault();
             const button = $(this);
             const url = button.attr('href');
-            
+
             $.ajax({
                 url: url,
                 type: 'PATCH',
@@ -291,7 +282,7 @@
                 success: function(response) {
                     button.find('i').toggleClass('fa-bell fa-bell-slash');
                     button.toggleClass('btn-warning btn-secondary');
-                    
+
                     // Update tooltip
                     const newTitle = button.attr('title') === 'تعطيل التنبيه' ? 'تفعيل التنبيه' : 'تعطيل التنبيه';
                     button.attr('title', newTitle).tooltip('dispose').tooltip();
@@ -308,7 +299,7 @@
             const value = $this.data('value');
             const field = $this.data('field');
             const productId = $this.data('product');
-            
+
             $this.html(`
                 <div class="input-group input-group-sm">
                     <input type="number" step="0.01" class="form-control" value="${value}" id="edit-${field}">
@@ -320,9 +311,9 @@
                     </button>
                 </div>
             `);
-            
+
             $(`#edit-${field}`).focus();
-            
+
             // Save on Enter key
             $(`#edit-${field}`).on('keypress', function(e) {
                 if (e.which === 13) {
@@ -330,22 +321,22 @@
                     return false;
                 }
             });
-            
+
             // Save button click
             $this.find('.btn-save-edit').on('click', function() {
                 const newValue = $(`#edit-${field}`).val();
                 saveEdit(newValue, field, productId, $this);
             });
-            
+
             // Cancel button click
             $this.find('.btn-cancel-edit').on('click', function() {
                 $this.html(formatValue(value, field));
             });
         });
-        
+
         function saveEdit(value, field, productId, $element) {
             if (!value) return;
-            
+
             $.ajax({
                 url: `/admin/products/${productId}/update-field`,
                 type: 'PATCH',
@@ -363,14 +354,14 @@
                 }
             });
         }
-        
+
         function formatValue(value, field) {
             if (field === 'price' || field === 'retail_price' || field === 'wholesale_price') {
                 return parseFloat(value).toFixed(2) + ' ر.س';
             }
             return value;
         }
-        
+
         function showToast(type, message) {
             const toast = `
                 <div class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
@@ -382,13 +373,16 @@
                     </div>
                 </div>
             `;
-            
+
             $('.toast-container').append(toast);
-            $('.toast').toast({ autohide: true, delay: 3000 });
+            $('.toast').toast({
+                autohide: true,
+                delay: 3000
+            });
             $('.toast').toast('show');
-            
+
             // Remove toast after it's hidden
-            $('.toast').on('hidden.bs.toast', function () {
+            $('.toast').on('hidden.bs.toast', function() {
                 $(this).remove();
             });
         }
