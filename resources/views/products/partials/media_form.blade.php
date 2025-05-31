@@ -134,6 +134,12 @@
                 </div>
 
                 <!-- مستعرض الملفات -->
+                <!-- حقل البحث عن منتج بالباركود -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <input type="text" id="barcode-search" class="form-control" placeholder="امسح الباركود أو أدخل الرقم..." autofocus>
+                    </div>
+                </div>
                 <div id="filesContainer">
                     <div class="row" id="filesList">
                         @forelse($product->productFiles()->with('file')->orderBy('the_order')->get() as $productFile)
@@ -177,6 +183,30 @@
 
 
 @push('scripts')
+<script>
+    // جعل حقل الباركود دائماً في حالة focus
+    window.onload = function() {
+        const barcodeInput = document.getElementById('barcode-search');
+        if(barcodeInput) barcodeInput.focus();
+    };
+    const barcodeInput = document.getElementById('barcode-search');
+    if(barcodeInput) {
+        barcodeInput.addEventListener('blur', function() {
+            setTimeout(() => this.focus(), 100);
+        });
+        // تنفيذ البحث تلقائياً عند الضغط Enter
+        barcodeInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const barcode = this.value.trim();
+                if(barcode) {
+                    // إعادة تحميل الصفحة مع الباركود كـ query string
+                    window.location.href = `?barcode=${encodeURIComponent(barcode)}`;
+                }
+            }
+        });
+    }
+</script>
 <script>
     // معاينة الصورة قبل الرفع
     function previewImage(input, previewId) {

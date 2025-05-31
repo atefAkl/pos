@@ -21,6 +21,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Schema::defaultStringLength(125);
-        \Illuminate\Support\Facades\DB::statement('SET GLOBAL innodb_strict_mode = 0');
+        //\Illuminate\Support\Facades\DB::statement('SET GLOBAL innodb_strict_mode = 0');
     }
 }

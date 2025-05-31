@@ -16,7 +16,8 @@ class POSController extends Controller
     public function index()
     {
         $customers = Customer::all();
-        return view('pos.index', compact('customers'));
+        $products = Product::all();
+        return view('pos.index', compact('customers', 'products'));
     }
 
     public function getProducts(Request $request)
@@ -26,7 +27,7 @@ class POSController extends Controller
 
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('code', 'like', "%{$search}%")
                     ->orWhere('barcode', 'like', "%{$search}%");
@@ -38,7 +39,7 @@ class POSController extends Controller
         }
 
         $products = $query->with('category')->get();
-        
+
         return Response::json($products);
     }
 
@@ -48,7 +49,7 @@ class POSController extends Controller
 
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('phone', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%");
@@ -56,15 +57,17 @@ class POSController extends Controller
         }
 
         $customers = $query->get();
-        
+
         return Response::json($customers);
     }
 
-    public function getProduct(Request $request, $id)
+    public function getProduct()
     {
+        $barcode = request('barcode');
         $product = Product::with('category')
-            ->findOrFail($id);
-            
+            ->where('barcode', $barcode)
+            ->first();
+
         return Response::json($product);
     }
 
@@ -84,14 +87,14 @@ class POSController extends Controller
             DB::beginTransaction();
 
             // حساب إجمالي الفاتورة
-            $subtotal = collect($request->items)->sum(function($item) {
+            $subtotal = collect($request->items)->sum(function ($item) {
                 return $item['quantity'] * $item['price'];
             });
 
             // إنشاء رقم الفاتورة
             $prefix = 'INV';
             $yearMonth = now()->format('ym');
-            
+
             // البحث عن آخر فاتورة لنفس الشهر
             $lastInvoice = Invoice::withTrashed()
                 ->where('invoice_number', 'like', $prefix . '-' . $yearMonth . '-%')
@@ -158,7 +161,6 @@ class POSController extends Controller
                 'message' => 'تم إنشاء الفاتورة بنجاح',
                 'invoice_id' => $invoice->id
             ]);
-
         } catch (\Exception $e) {
             DB::rollback();
             return Response::json([
