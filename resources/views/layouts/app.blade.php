@@ -7,6 +7,10 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <title>{{ config('app.name', 'نظام نقاط البيع') }}</title>
+        <meta name="app-url-for-js" content="{{ config('app.url') }}">
+
+        <!-- CSRF Token -->
+        <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,9 +26,13 @@
         <link href="{{ asset('css/alerts.css') }}" rel="stylesheet">
 
         @stack('styles')
+        @livewireStyles
         <script>
-            window.baseUrl = '{{ config('
-        app.url ') }}';
+            var metaAppUrlElement = document.querySelector('meta[name="app-url-for-js"]');
+            window.baseUrl = metaAppUrlElement ? metaAppUrlElement.getAttribute('content') : '';
+            if (!window.baseUrl) {
+                console.warn('Could not determine baseUrl from meta tag. Ensure config("app.url") is set and meta tag "app-url-for-js" exists. Falling back to an empty string.');
+            }
         </script>
     </head>
 
@@ -115,6 +123,8 @@
         <script src="{{ asset('build/assets/app.js') }}"></script>
         <script src="{{ asset('js/global.js') }}"></script>
         @stack('scripts')
+        @livewireScripts
+        {{-- <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script> --}}
     </body>
 
 </html>

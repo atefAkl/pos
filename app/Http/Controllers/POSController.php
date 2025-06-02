@@ -15,14 +15,19 @@ class POSController extends Controller
 {
     public function index()
     {
-        $customers = Customer::all();
-        $products = Product::all();
+        $customers = Customer::where('is_active', 1)->orderBy('name')->get(); // جلب العملاء النشطين فقط
+        // جلب المنتجات النشطة فقط والتي لها كمية أكبر من صفر إذا أردت
+        $products = Product::where('is_active', 1)
+            // ->where('quantity', '>', 0) // يمكنك تفعيل هذا إذا أردت فلترة أولية
+            ->orderBy('name')
+            ->get(); // جلب كل المنتجات النشطة مبدئيًا
+
         return view('pos.index', compact('customers', 'products'));
     }
 
     public function getProducts(Request $request)
     {
-        $query = Product::where('active', true)
+        $query = Product::where('is_active', true)
             ->where('quantity', '>', 0);
 
         if ($request->has('search')) {

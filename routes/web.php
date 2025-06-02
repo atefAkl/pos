@@ -15,6 +15,7 @@ use App\Http\Controllers\ProductSettingsController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\TaxController;
 use App\Http\Controllers\FileController;
+use App\Http\Controllers\ReportController; // Added ReportController
 
 Route::get('/', function () {
     return view('welcome');
@@ -24,6 +25,18 @@ Route::get('/', function () {
 Route::get('locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 
 Auth::routes();
+
+Route::middleware(['auth'])->group(function () { // تأكد من أن هذه المسارات محمية
+    Route::get('/pos', [App\Http\Controllers\PosController::class, 'index'])->name('pos.index');
+    Route::post('/pos/checkout', [App\Http\Controllers\PosController::class, 'checkout'])->name('pos.checkout');
+
+    // مسارات أخرى تتطلب تسجيل الدخول يمكن إضافتها هنا
+    // مثال:
+    // Route::resource('products', App\Http\Controllers\ProductController::class);
+    // Route::resource('categories', App\Http\Controllers\CategoryController::class);
+});
+
+// يجب إزالة أو تعديل أي تعريفات مكررة لهذه المسارات إذا كانت موجودة في مكان آخر
 
 // Temporary route to check database tables
 Route::get('/check-tables', function() {
@@ -50,6 +63,10 @@ Route::get('/test-currency-symbol', function() {
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home');
+
+    // Sales Report Route
+    Route::get('/reports/sales', [ReportController::class, 'salesReport'])->name('reports.sales');
+    
     
     // مسارات إعدادات المنتجات
     Route::prefix('settings')->name('settings.')->group(function () {

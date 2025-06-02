@@ -280,10 +280,10 @@
                             <i class="fas fa-file-invoice-dollar me-2"></i> الفواتير
                         </a>
                     </li>
-                    {{-- سيتم تفعيل هذا الرابط عند تنفيذ واجهات التقارير --}}
                     <li class="mb-2">
-                        <a href="#" class="text-white text-decoration-none d-block p-2 rounded hover-bg-primary">
-                            <i class="fas fa-chart-bar me-2"></i> التقارير
+                        <a href="{{ route('reports.sales') }}"
+                            class="text-white text-decoration-none d-block p-2 rounded {{ request()->routeIs('reports.*') ? 'bg-primary' : 'hover-bg-primary' }}">
+                            <i class="fas fa-chart-bar me-2"></i> @lang('Sales Report')
                         </a>
                     </li>
                     @can('manage-users')

@@ -13,13 +13,13 @@
                         <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th>رقم الفاتورة</th>
-                                    <th>العميل</th>
-                                    <th>الإجمالي</th>
-                                    <th>المدفوع</th>
-                                    <th>المتبقي</th>
-                                    <th>الحالة</th>
-                                    <th>التاريخ</th>
+                                    <th>{{__('sales.invoice_number')}}</th>
+                                    <th>{{__('sales.customer')}}</th>
+                                    <th>{{__('sales.total')}}</th>
+                                    <th>{{__('sales.paid_amount')}}</th>
+                                    <th>{{__('sales.remaining_amount')}}</th>
+                                    <th>{{__('sales.status')}}</th>
+                                    <th>{{__('sales.created_at')}}</th>
                                     <th>الإجراءات</th>
                                 </tr>
                             </thead>
@@ -27,17 +27,17 @@
                                 @forelse($invoices as $invoice)
                                 <tr>
                                     <td>{{ $invoice->invoice_number }}</td>
-                                    <td>{{ $invoice->customer->name ?? 'عميل نقدي' }}</td>
+                                    <td>{{ $invoice->customer->name ?? __('sales.customer_cash') }}</td>
                                     <td>{{ number_format($invoice->total, 2) }}</td>
                                     <td>{{ number_format($invoice->paid_amount, 2) }}</td>
                                     <td>{{ number_format($invoice->total - $invoice->paid_amount, 2) }}</td>
                                     <td>
                                         @if($invoice->status === 'paid')
-                                            <span class="badge bg-success">مدفوعة</span>
+                                        <span class="badge bg-success">{{__('sales.fully_paid')}}</span>
                                         @elseif($invoice->status === 'partially_paid')
-                                            <span class="badge bg-warning">مدفوعة جزئياً</span>
+                                        <span class="badge bg-warning">{{__('sales.partially_paid')}}</span>
                                         @else
-                                            <span class="badge bg-danger">غير مدفوعة</span>
+                                        <span class="badge bg-danger">{{__('sales.not_paid')}}</span>
                                         @endif
                                     </td>
                                     <td>{{ $invoice->created_at->format('Y-m-d H:i') }}</td>

@@ -165,13 +165,13 @@
                                         onsubmit="return confirm('هل أنت متأكد من حذف {{ $product->is_service ? 'هذه الخدمة' : 'هذا المنتج' }}؟')">
                                         @csrf
                                         @method('DELETE')
-                                        <a href="{{ route('products.show', $product) }}" class="btn btn-info" title="عرض">
+                                        <a href="{{ route('products.show', $product) }}" class="btn" data-bs-toggle="tooltip" data-bs-title="عرض">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{{ route('products.edit', $product) }}" class="btn btn-primary" title="تعديل">
+                                        <a href="{{ route('products.edit', $product) }}" class="btn" data-bs-toggle="tooltip" data-bs-title="تعديل">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <button type="submit" class="btn btn-danger" title="حذف">
+                                        <button type="submit" class="btn" data-bs-toggle="tooltip" data-bs-title="حذف">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
