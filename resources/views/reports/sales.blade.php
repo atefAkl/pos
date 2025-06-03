@@ -1,6 +1,6 @@
 @extends('layouts.dashboard')
 
-@section('title', __('Sales Report'))
+@section('title', __('reports.report-heading'))
 
 @section('content')
 <div class="container-fluid">
@@ -8,10 +8,10 @@
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">@lang('Sales Report')</h3>
+                    <h3 class="card-title">@lang('reports.report-heading')</h3>
                 </div>
                 <div class="card-body">
-                    @if(isset($sales) && $sales->count() > 0)
+                    @if(isset($invoices) && $invoices->count() > 0)
                     <div class="table-responsive">
                         <table class="table table-bordered table-striped">
                             <thead>
@@ -54,7 +54,7 @@
                         {{ $sales->links() }}
                     </div>
                     @else
-                    <p>@lang('No sales found.')</p>
+                    <p>@lang('reports.no-sales-records-found')</p>
                     @endif
                 </div>
             </div>
