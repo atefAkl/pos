@@ -35,65 +35,93 @@
             <div class="col-md-5 col-lg-4">
                 {{-- Success Message --}}
                 @if (session()->has('success'))
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        {{ session('success') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
                 @endif
 
                 {{-- Validation Errors --}}
                 @if ($errors->any())
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <ul class="mb-0">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
                 @endif
 
                 <h4 class="d-flex justify-content-between align-items-center mb-3">
                     <span class="text-primary">الفاتورة</span>
                     <span class="badge bg-primary rounded-pill">{{ count($cartItems) }}</span> {{-- Cart item count --}}
                 </h4>
-                <ul class="list-group mb-3" style="max-height: 35vh; overflow-y: auto;">
-                    @forelse ($cartItems as $itemId => $item)
-                    <li class="list-group-item d-flex justify-content-between lh-sm">
-                        <div>
-                            <h6 class="my-0">{{ $item['name'] }}</h6>
-                            <small class="text-muted">الكمية: {{ $item['quantity'] }}</small>
-                        </div>
-                        <span class="text-muted me-2">{{ number_format($item['price'] * $item['quantity'], 2) }} {{ __('SAR') }}</span>
-                        <div>
-                            <button class="btn btn-sm btn-outline-success py-0 px-1" wire:click="increaseQuantity('{{ $itemId }}')"><i class="fas fa-plus"></i></button>
-                            <button class="btn btn-sm btn-outline-warning py-0 px-1" wire:click="decreaseQuantity('{{ $itemId }}')"><i class="fas fa-minus"></i></button>
-                            <button class="btn btn-sm btn-outline-danger py-0 px-1" wire:click="removeItem('{{ $itemId }}')"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </li>
-                    @empty
-                    <li class="list-group-item d-flex justify-content-between lh-sm">
-                        <div>
-                            <h6 class="my-0">لا توجد أصناف في السلة</h6>
-                            <small class="text-muted">قم بإضافة منتجات</small>
-                        </div>
-                    </li>
-                    @endforelse
-                </ul>
+                <div class="card p-2 mb-3">
+                    <h5 class="mb-3">تفاصيل الفاتورة</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered mb-2">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>الصنف</th>
+                                    <th>الكمية</th>
+                                    <th>سعر الوحدة</th>
+                                    <th>الإجمالي</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($cartItems as $item)
+                                <tr>
+                                    <td>{{ $item['name'] }}</td>
+                                    <td>{{ $item['quantity'] }}</td>
+                                    <td>{{ number_format($item['price'], 2) }}</td>
+                                    <td>{{ number_format($item['price'] * $item['quantity'], 2) }}</td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="4" class="text-center">لا توجد أصناف في السلة</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    <ul class="list-group mb-2">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>الإجمالي بدون ضريبة</span>
+                            <strong>{{ number_format($cartSubtotal, 2) }} {{ __('SAR') }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>ضريبة القيمة المضافة</span>
+                            <strong>{{ number_format($cartVat, 2) }} {{ __('SAR') }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between bg-light">
+                            <span>الإجمالي مع الضريبة</span>
+                            <strong>{{ number_format($cartTotal, 2) }} {{ __('SAR') }}</strong>
+                        </li>
+                    </ul>
+                </div>
 
                 <div class="card p-2 mb-3">
-                    <div class="mb-3">
-                        <label for="customer" class="form-label">العميل</label>
+                    <div class="input-group mb-3">
+                        <label for="customer" class="input-group-text">العميل</label>
+                        <input type="text" class="form-control mb-2" placeholder="بحث عن عميل بالاسم أو الهاتف..." wire:model.debounce.300ms="searchCustomer">
                         <select class="form-select" id="customer" wire:model="selectedCustomerId">
-                            <option value="">اختر العميل...</option>
-                            @foreach ($customers as $customer)
+                            @foreach ($customersToDisplay as $customer)
                             <option value="{{ $customer->id }}">{{ $customer->name }} - {{ $customer->phone }}</option>
                             @endforeach
                         </select>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="notes" class="form-label">ملاحظات</label>
+                    <div class="mb-3 input-group">
+                        <label for="paymentMethod" class="input-group-text">طريقة الدفع</label>
+                        <select class="form-select" id="paymentMethod" wire:model="paymentMethod">
+                            <option value="cash">نقداً</option>
+                            <option value="card">بطاقة</option>
+                            <option value="mixed">مدفوع جزئي (نقداً + بطاقة)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 input-group">
+                        <label for="notes" class="input-group-text">ملاحظات</label>
                         <textarea class="form-control" id="notes" rows="2" wire:model="notes"></textarea>
                     </div>
                 </div>
@@ -101,7 +129,15 @@
                 <div class="card p-2">
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item d-flex justify-content-between">
-                            <span>الإجمالي ({{ __('SAR') }})</span>
+                            <span>الإجمالي بدون ضريبة ({{ __('SAR') }})</span>
+                            <strong>{{ number_format($cartSubtotal, 2) }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>ضريبة القيمة المضافة ({{ __('SAR') }})</span>
+                            <strong>{{ number_format($cartVat, 2) }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>الإجمالي مع الضريبة ({{ __('SAR') }})</span>
                             <strong>{{ number_format($cartTotal, 2) }}</strong>
                         </li>
                     </ul>
